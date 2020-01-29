@@ -1,0 +1,179 @@
+---
+title: "Ex1 - TMA4300"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Problem A
+
+## 1.
+```{r}
+# Function
+samples_exp = function(rate, n){
+  x = - log(runif(n)) / rate
+  return(x)
+}
+
+# Check solution
+rate = 4
+n = 1000
+a = samples_exp(rate, n)
+hist(a)
+
+mean_empirical = sum(a) / length(a)
+mean_theoretical = 1 / rate
+cat('Empirical mean:', mean_empirical)
+cat('\nTheoretical mean:', mean_theoretical)
+
+var_empirical = sum((a-mean_empirical)^2) / (length(a) - 1)
+var_theoretical = 1 / rate^2
+cat('\nEmpirical variance:', var_empirical)
+cat('\nTheoretical variance:', var_theoretical)
+```
+
+## 2.
+
+** a)
+$$
+  g(x) = \begin{cases} 0, & x\leq 0 \\ cx^{\alpha -1}, & 0 < x < 1 \\ ce^{-x}, & x \geq 1 \end{cases}
+$$
+Given $\alpha\in (0,1)$ we find that the normalizing constant is $c=\frac{\alpha e}{\alpha + e}$.
+The cdf is
+$$
+  F(x) = P(X\leq x) = \begin{cases} 0, & x\leq 0 \\ \frac{c}{\alpha}x^{\alpha}, & 0 < x < 1 \\ c(\frac{1}{\alpha}+\frac{1}{e}-e^{-x}), & x \geq 1 \end{cases}.
+$$
+Let $F(x)=y$. The inverse of the cdf is
+$$
+  F^{-1}(y) = \begin{cases} (\frac{\alpha y}{c})^{1/\alpha}, & 0 < y \leq \frac{c}{\alpha} \\ -\ln(\frac{1}{\alpha}+\frac{1}{e}-\frac{y}{c}), & y > \frac{c}{\alpha} \end{cases}.
+$$
+
+
+** b)
+
+```{r}
+
+samples_g = function(alpha, n) {
+  c = alpha * exp(1) / (alpha + exp(1))
+  u = runif(n)
+  vec = rep(0, n)
+  for(i in 1:length(u)){
+    if(u[i]<= c/alpha) {vec[i] = (alpha * u[i] / c)^(1 / alpha)}
+    else {vec[i] = -log(1/alpha + exp(-1) - u[i]/c)}
+  }
+  return(vec)
+}
+
+# Check solution
+alpha = 0.8
+c = alpha * exp(1) / (alpha + exp(1))
+n = 1000
+b = samples_g(alpha, n)
+hist(b)
+
+mean_emp = sum(b) / length(b)
+mean_theo = c * (1/(alpha+1) + 2*exp(-1))
+cat('Empirical mean:', mean_emp)
+cat('\nTheoretical mean:', mean_theo)
+
+var_emp = sum((b-mean_emp)^2) / (length(b)-1) 
+var_theo = c * (1/(alpha+2) + 5*exp(-1)) - mean_theo^2
+cat('\nEmpirical variance:', var_emp)
+cat('\nTheoretical variance:', var_theo)
+```
+
+## 3.
+
+```{r}
+
+boxmuller = function(n) {
+  u1 = runif(n)
+  u2 = runif(n)
+  r = sqrt(-2*log(u1))
+  theta = 2*pi*u2
+  x = r*cos(theta)
+  #y = r*sin(theta)
+  return(x)
+}
+bm = boxmuller(10000)
+hist(bm)
+
+mean_bm = sum(bm) / length(bm)
+cat('Mean:', mean_bm)
+
+var_bm = sum((bm-mean_bm)^2) / (length(bm)-1)
+cat('\nVariance:', var_bm)
+```
+
+
+## 4.
+
+```{r}
+mult_normal = function(d, mu, sigma) {
+  # mu must have length d, sigma dxd
+  x = boxmuller(d)
+  A = t(chol(sigma))  # lower triangular matrix
+  y = mu + A %*% x    # y mult normal
+  return(y)
+}
+
+# Check solution
+mu = c(1,2)
+sigma = cbind(c(1,0.5),c(0.5,1))
+
+# Estimate mean and empirical variance
+mu_est = rep(0,length(mu))
+for(i in 1:10000) {
+  multnor = mult_normal(length(mu),mu,sigma)
+  mu_est = mu_est + multnor
+}
+mu_est = mu_est / 10000
+mu_est
+
+### HOW TO FIND COVARIANCE ????
+
+```
+
+
+# Problem B
+## 1.
+** a)
+
+The acceptance probability is
+$$
+  a = \begin{cases} e^{-x}, & 0<x<1 \\ x^{\alpha-1}, & x\geq 1 \end{cases}.
+$$
+
+** b)
+
+```{r}
+#f = function(x,alpha) {
+  #return(x^(alpha-1)*exp(-x)/gamma(alpha))
+#}
+
+accprob = function(x,alpha) {
+  if(x<1) {return(exp(-x))}
+  else if(x>=1) {return(x^(alpha-1)}
+}
+
+gamma_rejsamp = function(n,alpha) {
+  vec = rep(0,n)
+  i = 1
+  while(i<=n) {
+    x = samples_g(alpha,n)
+    u = runif(1)
+    a = accprob(x,alpha)
+    if(u<=a) {
+      vec[i] = x
+      i = i + 1
+      }
+  }
+  return(vec)
+}
+
+
+
+```
+
