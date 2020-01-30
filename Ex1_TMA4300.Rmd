@@ -301,3 +301,36 @@ var.theo
 
 ```
 
+
+# Problem D
+## 1.
+```{r}
+ln.accprob = function(x) {
+  lnc = (15 + sqrt(53809)) / 394
+  return(125*log(2+x) + 38*log(1-x) + 34*log(x) - lnc)
+}
+
+multbinom = function(n) {
+  vec = rep(0,n)
+  i = 1
+  while(i<=n) {
+    theta = runif(1)
+    lnu = log(runif(1))
+    lna = ln.accprob(theta)
+    if(lnu<=lna) {
+      vec[i] = theta
+      i = i + 1
+      }
+  }
+  return(vec)
+}
+
+# Test 
+multbin.sample = multbinom(10000)
+hist(multbin.sample)
+
+mean(multbin.sample)
+var(multbin.sample)
+# evt regne ut teoretiske verdier?
+```
+
