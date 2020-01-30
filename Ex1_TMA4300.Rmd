@@ -187,4 +187,117 @@ var.theo
 ```
 
 
+## 2.
+
+** a)
+
+** b)
+
+```{r}
+inv.cdf.sampling = function(n,ab) {
+  u = runif(n)
+  x = log(ab*u)
+  return(x)
+}
+
+samples.f = function(n,alpha) {
+  vec = rep(0,n)
+  i = 1
+  a = ((alpha-1)/exp(1))^((alpha-1)/2)
+  b = ((alpha+1)/exp(1))^((alpha+1)/2)
+  tries = 0
+  while(i<=n) {
+    z1 = inv.cdf.sampling(1,a)
+    z2 = inv.cdf.sampling(1,b)
+    diff = z2 - z1
+    limit = ((alpha-1)*diff - exp(diff)) / 2
+    limit
+    if(z1 <= limit) {
+      vec[i] = exp(diff)
+      i = i + 1
+    }
+    tries = tries + 1
+  }
+  return(c(tries,vec))
+}
+
+#Check function
+alpha = 4
+n = 10000
+gamma.sample = samples.f(n,alpha)[-1]
+mean.emp = mean(gamma.sample)
+mean.emp
+mean.theo = alpha
+mean.theo
+var.emp = var(gamma.sample)
+var.emp
+var.theo = alpha
+var.theo
+
+
+# Number of tries for different alphas
+#alphas = seq(1,2000,length.out = 20)
+alphas = seq(1,300,length.out = 20)
+tries = rep(0,length(alphas))
+for(i in 1:length(alphas)) {
+  s = samples.f(1000,alphas[i])
+  tries[i] = s[1]
+}
+plot(alphas,tries)
+```
+
+## 3.
+
+```{r}
+
+gamma = function(n,alpha,beta) {
+  if(alpha<1) {return(gamma_rejsamp(n,alpha) / beta)}
+  else if(alpha>1) {return(samples.f(n,alpha)[-1] / beta)}
+  else {return(samples_exp(beta,n))}
+}
+
+# Test function
+alpha = 0.5
+beta = 2
+n = 1000
+gam.samp = gamma(n,alpha,beta)
+mean.emp = mean(gam.samp)
+mean.theo = alpha / beta
+mean.emp
+mean.theo
+
+var.emp = var(gam.samp)
+var.theo = alpha / beta^2
+var.emp
+var.theo
+
+alpha = 1
+beta = 2
+n = 1000
+gam.samp = gamma(n,alpha,beta)
+mean.emp = mean(gam.samp)
+mean.theo = alpha / beta
+mean.emp
+mean.theo
+
+var.emp = var(gam.samp)
+var.theo = alpha / beta^2
+var.emp
+var.theo
+
+alpha = 10
+beta = 2
+n = 1000
+gam.samp = gamma(n,alpha,beta)
+mean.emp = mean(gam.samp)
+mean.theo = alpha / beta
+mean.emp
+mean.theo
+
+var.emp = var(gam.samp)
+var.theo = alpha / beta^2
+var.emp
+var.theo
+
+```
 
