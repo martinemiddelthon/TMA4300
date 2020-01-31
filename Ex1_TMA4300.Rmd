@@ -11,41 +11,50 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## 1.
 ```{r}
-# Function
+# Function to sample n times from exponential distribution
 samples_exp = function(rate, n){
-  x = - log(runif(n)) / rate
-  return(x)
+  u = runif(n)          # Sample from unif(0,1) distribution
+  x = - log(u) / rate   # Compute values using inverse cdf
+  return(x)             # Vector of n samples
 }
 
-# Check solution
-rate = 4
-n = 1000
-a = samples_exp(rate, n)
-hist(a)
+# Function to print mean and variance
+print.mean.var = function(n, m.emp, m.th, v.emp, v.th) {
+  cat('Number of samples:', n)
+  cat('\n\nEmpirical mean:', m.emp)
+  cat('\nTheoretical mean:', m.th)
+  cat('\n\nEmpirical variance:', v.emp)
+  cat('\nTheoretical variance:', v.th)
+}
 
-mean_empirical = sum(a) / length(a)
-mean_theoretical = 1 / rate
-cat('Empirical mean:', mean_empirical)
-cat('\nTheoretical mean:', mean_theoretical)
+# Check function
+rate = 4                                        # Set rate parameter
+n = 10000                                       # Number of samples
+exp.sample = samples_exp(rate, n)               # Sample
+hist(exp.sample)                                # Histogram of sample
 
-var_empirical = sum((a-mean_empirical)^2) / (length(a) - 1)
-var_theoretical = 1 / rate^2
-cat('\nEmpirical variance:', var_empirical)
-cat('\nTheoretical variance:', var_theoretical)
+mean.emp.exp = mean(exp.sample)                 # Empirical mean
+mean.th.exp = 1 / rate                          # Theoretical mean
+
+var.emp.exp = var(exp.sample)                   # Empirical variance
+var.th.exp = 1 / rate^2                         # Theoretical variance
+
+print.mean.var(n, mean.emp.exp, mean.th.exp, var.emp.exp, var.th.exp)  # Print values
 ```
 
 ## 2.
 
 ** a)
+We consider the probability density function
 $$
-  g(x) = \begin{cases} 0, & x\leq 0 \\ cx^{\alpha -1}, & 0 < x < 1 \\ ce^{-x}, & x \geq 1 \end{cases}
+  g(x) = \begin{cases} 0, & x\leq 0 \\ cx^{\alpha -1}, & 0 < x < 1 \\ ce^{-x}, & x \geq 1 \end{cases},
 $$
-Given $\alpha\in (0,1)$ we find that the normalizing constant is $c=\frac{\alpha e}{\alpha + e}$.
-The cdf is
+where $\alpha\in (0,1)$ and $c$ is a normalizing constant. Given $\alpha$, we find that the normalizing constant is $c=\frac{\alpha e}{\alpha + e}$.
+By integrating $g(x)$ from $-\infty$ to $x$, the cumulative distribution function is found to be
 $$
   F(x) = P(X\leq x) = \begin{cases} 0, & x\leq 0 \\ \frac{c}{\alpha}x^{\alpha}, & 0 < x < 1 \\ c(\frac{1}{\alpha}+\frac{1}{e}-e^{-x}), & x \geq 1 \end{cases}.
 $$
-Let $F(x)=y$. The inverse of the cdf is
+In order to find the inverse cdf we let $F(x)=y$. The cdf maps $x\in(-\infty,\infty)$ to $y\in[0,1]$. By solving $F(x)=y$ with respect to $x$, we find that the inverse of the cdf is
 $$
   F^{-1}(y) = \begin{cases} (\frac{\alpha y}{c})^{1/\alpha}, & 0 < y \leq \frac{c}{\alpha} \\ -\ln(\frac{1}{\alpha}+\frac{1}{e}-\frac{y}{c}), & y > \frac{c}{\alpha} \end{cases}.
 $$
@@ -190,6 +199,15 @@ var.theo
 ## 2.
 
 ** a)
+
+$$
+  a = \bigg(\frac{\alpha-1}{e}\bigg)^{\frac{\alpha-1}{2}}
+$$
+$b_- = 0$ and
+
+$$
+  b_+ = \bigg(\frac{\alpha+1}{e}\bigg)^{\frac{\alpha+1}{2}}
+$$
 
 ** b)
 
