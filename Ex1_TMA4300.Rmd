@@ -391,6 +391,16 @@ dirichlet <- function(alphas){
   return(zs/sum(zs))
 }
 
+#Testing
+K = 3
+alphas <- runif(K,0.1,5.0)
+mean.theo <- alphas/sum(alphas)
+dirichlet.samples <- rep(0,K)
+for (i in 1:30){dirichlet.samples = dirichlet.samples + dirichlet(alphas)}
+dirichlet.samples = dirichlet.samples/30
+mean.theo
+dirichlet.samples
+
 ```
 
 
