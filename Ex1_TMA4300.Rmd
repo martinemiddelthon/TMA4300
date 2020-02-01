@@ -379,6 +379,20 @@ f_X(x_1,\ldots,x_{K-1}) = \Gamma(\sum_{k=1}^{K}\alpha_k)\cdot \frac{(1 - \sum_{k
 $$
 which is the Dirichlet distribution with parameters $(\alpha_1,\ldots,\alpha_K).$
 
+## 2.
+
+```{r}
+#Function for generating one Diriclet distributed variable with parameter alpha:
+dirichlet <- function(alphas){
+  zs = rep(0,length(alphas))
+  for (k in 1:length(alphas)){
+    zs[k] <- gamma(1,alphas[k],1)
+  }
+  return(zs/sum(zs))
+}
+
+```
+
 
 # Problem D
 ## 1.
