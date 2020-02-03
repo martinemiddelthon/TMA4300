@@ -429,10 +429,28 @@ multbinom = function(n) {
 
 # Test 
 multbin.sample = multbinom(10000)
+multbin.mean.MC <- mean(multbin.sample)
+
 hist(multbin.sample)
+abline(v = multbin.mean.MC, col="red")
 
 mean(multbin.sample)
 var(multbin.sample)
-# evt regne ut teoretiske verdier?
+# evt regne ut teoretiske verdier? 
 ```
 
+##2
+
+```{r}
+multbin.prior <- function(x){
+  return((2+x)^125*(1-x)^38*x^34)
+}
+
+multbin.integrand <- function(x){
+  c <- integrate(multbin.prior,0,1)
+  return((1/(c$value))*x*(2+x)^125*(1-x)^38*x^34)
+}
+
+multbin.mean.exact <- integrate(multbin.integrand,0,1)
+multbin.mean.exact
+```
