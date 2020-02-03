@@ -153,7 +153,7 @@ mu_est = mu_est / n               # Estimated mean vector
 
 sigma_est = var(multnor.sample)   # Estimated covariance matrix
 
-# Prining
+# Printing
 cat('True mean:', mu)
 cat('\nEstimated mean:', mu_est)
 cat('\n\nTrue covariance matrix:\n')
@@ -167,46 +167,60 @@ sigma_est
 ## 1.
 ** a)
 
-The acceptance probability is
+We consider a gamma distribution with parameters $\alpha\in (0,1)$ and $\beta=1$. It has probability density function
 $$
-  a = \begin{cases} e^{-x}, & 0<x<1 \\ x^{\alpha-1}, & x\geq 1 \end{cases}.
+  f(x) = \begin{cases} \frac{1}{\Gamma(\alpha)} x^{\alpha-1}e^{-x}, & x>0 \\ 0, & \text{otherwise} \end{cases}.
+$$
+We want to use rejection sampling to generate samples from $f$ by proposing samples from $g$. Thus we need the acceptance probability $A(x) = \frac{1}{k}\frac{f(x)}{g(x)}$, so we have to find a $k>1$ such that $\frac{f(x)}{g(x)}\leq k$ for all $x$ where $f(x)>0$. We evaluate this fraction when $0<x<1$ and find that
+$$
+  \frac{f(x)}{g(x)} = \frac{e^{-x}}{c\Gamma(\alpha)} \leq \frac{1}{c\Gamma(\alpha)},
+$$
+on this interval. Here, $c$ is the normalizing constant in $g$. When $x\geq 1$ the fraction becomes
+$$
+  \frac{f(x)}{g(x)} = \frac{x^{\alpha-1}}{c\Gamma(\alpha)} \leq \frac{1}{c\Gamma(\alpha)}.
+$$
+Thus, we set $k=\frac{1}{c\Gamma(\alpha)}$, and the acceptance probability becomes
+$$
+  A(x) = \begin{cases} e^{-x}, & 0<x<1 \\ x^{\alpha-1}, & x\geq 1 \end{cases}.
 $$
 
 ** b)
 
 ```{r}
-accprob = function(x,alpha) {
+# Function to calculate the acceptance probability
+accprob = function(x, alpha) {
   if(x<1) {return(exp(-x))}
   else if(x>=1) {return(x^(alpha-1))}
 }
 
-gamma_rejsamp = function(n,alpha) {
-  vec = rep(0,n)
+# Function to generate n samples from f
+gamma_rejsamp = function(n, alpha) {
+  vec = rep(0, n)             # Vector for storing the accepted samples
   i = 1
   while(i<=n) {
-    x = samples_g(alpha,1)
-    u = runif(1)
-    a = accprob(x,alpha)
-    if(u<=a) {
-      vec[i] = x
+    x = samples_g(alpha, 1)   # Sample from proposal density
+    u = runif(1)              # Sample from unif(0,1)
+    a = accprob(x, alpha)     # Calculate acceptance probability
+    if(u<=a) {                # Accept x as a sample
+      vec[i] = x              # Store x
       i = i + 1
       }
   }
   return(vec)
 }
 
-alpha = 0.5
-n = 10000
-gamma.sample = gamma_rejsamp(n,alpha)
-mean.emp = mean(gamma.sample)
-mean.emp
-mean.theo = alpha
-mean.theo
-var.emp = var(gamma.sample)
-var.emp
-var.theo = alpha
-var.theo
+# Check function
+alpha = 0.5     # Set parameter
+n = 10000       # Number of samples
+gamma.sample = gamma_rejsamp(n, alpha)    # Generate samples
 
+mean.emp = mean(gamma.sample)   # Empirical mean
+mean.theo = alpha               # Theoretical mean
+
+var.emp = var(gamma.sample)     # Empirical variance
+var.theo = alpha                # Theoretical variance
+
+print.mean.var(n, mean.emp, mean.theo, var.emp, var.theo)   # Printing values
 ```
 
 
@@ -214,122 +228,113 @@ var.theo
 
 ** a)
 
+We consider a gamma distribution with parameters $\alpha>1$ and $\beta=1$, and we want to use the ratio of uniforms method to generate samples from this distribution. We define $C_f = \{(x_1,x_2):0\leq x_1\leq \sqrt{f^*(\frac{x_1}{x_2})}\}$ and
 $$
-  a = \bigg(\frac{\alpha-1}{e}\bigg)^{\frac{\alpha-1}{2}}
+  f^*(x) = \begin{cases} x^{\alpha-1}e^{-x}, & x>0 \\ 0, & \text{otherwise} \end{cases}.
 $$
-$b_- = 0$ and
+We also define $a = \sqrt{\sup_x f^*(x)}$, $b_- = -\sqrt{\sup_{x\leq0}(x^2f^*(x))}$ and $b_+ = \sqrt{\sup_{x\geq0}(x^2f^*(x))}$, so that $C_f\subset[0,a]\times[b_-,b_+]$.
+Since $f^*(x)$ is bounded and positive for $x>0$, we find its maximum by differentiating it on this interval and setting it equal to zero. This gives $x=0$ and $x=\alpha-1$, where the latter clearly gives the maximum. Thus we find that
+$$
+  a = \sqrt{f^*(\alpha-1)} = \bigg(\frac{\alpha-1}{e}\bigg)^{\frac{\alpha-1}{2}}
+$$
 
+To find the maximum of $x^2f^*(x)$ we follow the same procedure, and find that it attains its maximum for $x=\alpha+1$. Thus,
 $$
-  b_+ = \bigg(\frac{\alpha+1}{e}\bigg)^{\frac{\alpha+1}{2}}
+  b_+ = \sqrt{(\alpha+1)^2f^*(\alpha+1)} = \bigg(\frac{\alpha+1}{e}\bigg)^{\frac{\alpha+1}{2}}
 $$
+Since $f^*(x)=0$ for $x\leq0$, we immediately see that $b_- = 0$.
+
 
 ** b)
 
 ```{r}
-inv.cdf.sampling = function(n,ab) {
-  u = runif(n)
-  x = log(ab*u)
+# Function to generate n samples from ln(unif(0,ab))
+inv.cdf.sampling = function(n, ab) {
+  u = runif(n)    # Sample from unif(0,1)
+  x = log(ab*u)   # Using inverse cdf
   return(x)
 }
 
-samples.f = function(n,alpha) {
-  vec = rep(0,n)
-  i = 1
-  a = ((alpha-1)/exp(1))^((alpha-1)/2)
-  b = ((alpha+1)/exp(1))^((alpha+1)/2)
-  tries = 0
+# Function to generate n samples from f
+# alpha > 1
+samples.f = function(n, alpha) {
+  vec = rep(0,n)                        # Vector for storing the samples
+  i = 1                                 # Count index in vec
+  a = ((alpha-1)/exp(1))^((alpha-1)/2)  # Value of a
+  b = ((alpha+1)/exp(1))^((alpha+1)/2)  # Value of b_+
+  tries = 0                             # Count number of tries to generate n realizations
   while(i<=n) {
-    z1 = inv.cdf.sampling(1,a)
-    z2 = inv.cdf.sampling(1,b)
+    z1 = inv.cdf.sampling(1,a)          # Sample from ln(unif(0,a))
+    z2 = inv.cdf.sampling(1,b)          # Sample from ln(unif(b_-,b_+))
     diff = z2 - z1
-    limit = ((alpha-1)*diff - exp(diff)) / 2
-    limit
-    if(z1 <= limit) {
-      vec[i] = exp(diff)
+    limit = ((alpha-1)*diff - exp(diff)) / 2  # Calculate upper limit for z1 in C_f
+    if(z1 <= limit) {                   # Accept the sample
+      vec[i] = exp(diff)                # Store ratio of uniforms
       i = i + 1
     }
     tries = tries + 1
   }
-  return(c(tries,vec))
+  return(c(tries,vec))                  # Return number of tries and vector of samples
 }
 
-#Check function
-alpha = 4
-n = 10000
-gamma.sample = samples.f(n,alpha)[-1]
-mean.emp = mean(gamma.sample)
-mean.emp
-mean.theo = alpha
-mean.theo
-var.emp = var(gamma.sample)
-var.emp
-var.theo = alpha
-var.theo
+# Check function
+alpha = 4       # Set parameter
+n = 10000       # Number of samples
+gamma.sample = samples.f(n,alpha)[-1]   # Generate samples
+hist(gamma.sample)                      # Histogram of samples
 
+mean.emp = mean(gamma.sample)           # Empirical mean
+mean.theo = alpha                       # Theoretical mean
+
+var.emp = var(gamma.sample)             # Empirical variance
+var.theo = alpha                        # Theoretical variance
+
+print.mean.var(n, mean.emp, mean.theo, var.emp, var.theo) # Printing values
 
 # Number of tries for different alphas
-#alphas = seq(1,2000,length.out = 20)
-alphas = seq(1,300,length.out = 20)
-tries = rep(0,length(alphas))
+#alphas = seq(1.1,2000,length.out = 20)
+n = 1000                                # Number of samples to generate
+alphas = seq(1.1,300,length.out = 20)   # Values for alpha  
+tries = rep(0,length(alphas))           # Vector to store number of tries to generate n samples for different alphas
 for(i in 1:length(alphas)) {
   s = samples.f(1000,alphas[i])
   tries[i] = s[1]
 }
-plot(alphas,tries)
+plot(alphas,tries)                      # Plot of alpha vs number of tries
 ```
 
 ## 3.
 
 ```{r}
-
-gamma = function(n,alpha,beta) {
-  if(alpha<1) {return(gamma_rejsamp(n,alpha) / beta)}
-  else if(alpha>1) {return(samples.f(n,alpha)[-1] / beta)}
-  else {return(samples_exp(beta,n))}
+# Function to generate n samples from gamma distribution
+gamma = function(n, alpha, beta) {
+  if(alpha<1) {return(gamma_rejsamp(n,alpha) / beta)}       # alpha<1, beta is an inverse scale parameter
+  else if(alpha>1) {return(samples.f(n,alpha)[-1] / beta)}  # alpha>1, beta is an inverse scale parameter
+  else {return(samples_exp(beta,n))}                        # alpha=1, exponential distribution with rate beta
 }
 
 # Test function
-alpha = 0.5
+
+# Function to generate samples and print values
+test.gam = function(n, alpha, beta) {
+  gam.samp = gamma(n, alpha, beta)
+  mean.emp = mean(gam.samp)
+  mean.theo = alpha / beta
+  var.emp = var(gam.samp)
+  var.theo = alpha / beta^2
+  cat('alpha=',alpha,'\nbeta=',beta,'\n')
+  print.mean.var(n, mean.emp, mean.theo, var.emp, var.theo)
+  cat('\n\n\n')
+}
+
+# Set parameters
+n = 10000
+alpha = c(0.5, 1, 10)
 beta = 2
-n = 1000
-gam.samp = gamma(n,alpha,beta)
-mean.emp = mean(gam.samp)
-mean.theo = alpha / beta
-mean.emp
-mean.theo
 
-var.emp = var(gam.samp)
-var.theo = alpha / beta^2
-var.emp
-var.theo
-
-alpha = 1
-beta = 2
-n = 1000
-gam.samp = gamma(n,alpha,beta)
-mean.emp = mean(gam.samp)
-mean.theo = alpha / beta
-mean.emp
-mean.theo
-
-var.emp = var(gam.samp)
-var.theo = alpha / beta^2
-var.emp
-var.theo
-
-alpha = 10
-beta = 2
-n = 1000
-gam.samp = gamma(n,alpha,beta)
-mean.emp = mean(gam.samp)
-mean.theo = alpha / beta
-mean.emp
-mean.theo
-
-var.emp = var(gam.samp)
-var.theo = alpha / beta^2
-var.emp
-var.theo
+test.gam(n, alpha[1], beta)
+test.gam(n, alpha[2], beta)
+test.gam(n, alpha[3], beta)
 
 ```
 
