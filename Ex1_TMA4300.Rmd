@@ -56,96 +56,110 @@ $$
 $$
 In order to find the inverse cdf we let $F(x)=y$. The cdf maps $x\in(-\infty,\infty)$ to $y\in[0,1]$. By solving $F(x)=y$ with respect to $x$, we find that the inverse of the cdf is
 $$
-  F^{-1}(y) = \begin{cases} (\frac{\alpha y}{c})^{1/\alpha}, & 0 < y \leq \frac{c}{\alpha} \\ -\ln(\frac{1}{\alpha}+\frac{1}{e}-\frac{y}{c}), & y > \frac{c}{\alpha} \end{cases}.
+  F^{-1}(y) = \begin{cases} (\frac{\alpha y}{c})^{1/\alpha}, & 0 \leq y \leq \frac{c}{\alpha} \\ -\ln(\frac{1}{\alpha}+\frac{1}{e}-\frac{y}{c}), & y > \frac{c}{\alpha} \end{cases}.
 $$
 
 
 ** b)
 
 ```{r}
-
+# Function to sample from g using inverse cdf
 samples_g = function(alpha, n) {
-  c = alpha * exp(1) / (alpha + exp(1))
-  u = runif(n)
-  vec = rep(0, n)
+  c = alpha * exp(1) / (alpha + exp(1))   # Normalizing constant
+  u = runif(n)                            # Sample from unif(0,1) distribution
+  vec = rep(0, n)                         # Vector to store the generated samples
   for(i in 1:length(u)){
-    if(u[i]<= c/alpha) {vec[i] = (alpha * u[i] / c)^(1 / alpha)}
-    else {vec[i] = -log(1/alpha + exp(-1) - u[i]/c)}
+    if(u[i]<= c/alpha) {vec[i] = (alpha * u[i] / c)^(1 / alpha)}  # Use case 1 in inverse cdf to generate sample
+    else {vec[i] = -log(1/alpha + exp(-1) - u[i]/c)}              # Use case 2 in inverse cdf to generate sample
   }
   return(vec)
 }
 
-# Check solution
-alpha = 0.8
-c = alpha * exp(1) / (alpha + exp(1))
-n = 1000
-b = samples_g(alpha, n)
-hist(b)
+# Check function
+alpha = 0.8                               # Set parameter
+c = alpha * exp(1) / (alpha + exp(1))     # Normalizing constant
+n = 10000                                 # Number of samples
+samples.g = samples_g(alpha, n)           # Sampling from g
+hist(samples.g)                           # Histogram of samples
 
-mean_emp = sum(b) / length(b)
-mean_theo = c * (1/(alpha+1) + 2*exp(-1))
-cat('Empirical mean:', mean_emp)
-cat('\nTheoretical mean:', mean_theo)
+mean.emp.g = mean(samples.g)                      # Empirical mean
+mean.theo.g = c * (1/(alpha+1) + 2*exp(-1))       # Theoretical mean
 
-var_emp = sum((b-mean_emp)^2) / (length(b)-1) 
-var_theo = c * (1/(alpha+2) + 5*exp(-1)) - mean_theo^2
-cat('\nEmpirical variance:', var_emp)
-cat('\nTheoretical variance:', var_theo)
+var.emp.g = var(samples.g)                                  # Empirical variance
+var.theo.g = c * (1/(alpha+2) + 5*exp(-1)) - mean.theo.g^2  # Theoretical variance
+
+print.mean.var(n, mean.emp.g, mean.theo.g, var.emp.g, var.theo.g)   # Print values
 ```
 
 ## 3.
 
 ```{r}
-
+# Function to generate n samples from N(0,1) using Box Muller
 boxmuller = function(n) {
+  # Sample from unif(0,1)
   u1 = runif(n)
   u2 = runif(n)
+  # Polar coordinates
   r = sqrt(-2*log(u1))
   theta = 2*pi*u2
-  x = r*cos(theta)
+  #Cartesian coordinate(s)
+  x = r*cos(theta)          # Vector of n independent samples
   #y = r*sin(theta)
   return(x)
 }
-bm = boxmuller(10000)
-hist(bm)
 
-mean_bm = sum(bm) / length(bm)
-cat('Mean:', mean_bm)
+# Check function
+n = 10000                       # Number of samples
+bm.samples = boxmuller(n)       # Sampling from N(0,1)
+hist(bm.samples)                # Histogram of samples
 
-var_bm = sum((bm-mean_bm)^2) / (length(bm)-1)
-cat('\nVariance:', var_bm)
+mean_bm = mean(bm.samples)      # Empirical mean
+var_bm = var(bm.samples)        # Empirical variance
+
+print.mean.var(n, mean_bm, 0, var_bm, 1)  # Print values
 ```
 
 
 ## 4.
 
 ```{r}
+# Function to generate a realization from d-variate normal distribution
 mult_normal = function(d, mu, sigma) {
-  # mu must have length d, sigma dxd
-  x = boxmuller(d)
-  A = t(chol(sigma))  # lower triangular matrix
-  y = mu + A %*% x    # y mult normal
+  # mu is vector of means, must have length d
+  # sigma is covariance matrix, must have dimension dxd
+  x = boxmuller(d)    # d N(0,1) distributed variables
+  A = t(chol(sigma))  # Cholesky decomposition of covariance matrix (lower triangular)
+  y = mu + A %*% x    # d-variate N(mu, sigma)
   return(y)
 }
 
-# Check solution
-mu = c(1,2)
+
+# Check function
+
+# vector of means and covariance matrix
+mu = c(1,2)         
 sigma = cbind(c(1,0.5),c(0.5,1))
 
 # Estimate mean and empirical variance
-n = 1000
-mu_est = rep(0,length(mu))
-multnor.sample = matrix(NA,n,length(mu))
+n = 10000                     # Number of realizations
+mu_est = rep(0,length(mu))    
+multnor.sample = matrix(NA, n, length(mu))
 for(i in 1:n) {
   multnor = mult_normal(length(mu),mu,sigma)
   mu_est = mu_est + multnor
   multnor.sample[i,] = multnor
   }
-mu_est = mu_est / n
-mu_est
+mu_est = mu_est / n               # Estimated mean vector
 
-var(multnor.sample)
+sigma_est = var(multnor.sample)   # Estimated covariance matrix
 
+# Prining
+cat('True mean:', mu)
+cat('\nEstimated mean:', mu_est)
+cat('\n\nTrue covariance matrix:\n')
+sigma
+cat('\nEstimated covariance matrix:\n')
+sigma_est
 ```
 
 
