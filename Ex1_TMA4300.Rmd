@@ -44,7 +44,7 @@ print.mean.var(n, mean.emp.exp, mean.th.exp, var.emp.exp, var.th.exp)  # Print v
 
 ## 2.
 
-** a)
+**a)**
 We consider the probability density function
 $$
   g(x) = \begin{cases} 0, & x\leq 0 \\ cx^{\alpha -1}, & 0 < x < 1 \\ ce^{-x}, & x \geq 1 \end{cases},
@@ -54,13 +54,13 @@ By integrating $g(x)$ from $-\infty$ to $x$, the cumulative distribution functio
 $$
   F(x) = P(X\leq x) = \begin{cases} 0, & x\leq 0 \\ \frac{c}{\alpha}x^{\alpha}, & 0 < x < 1 \\ c(\frac{1}{\alpha}+\frac{1}{e}-e^{-x}), & x \geq 1 \end{cases}.
 $$
-In order to find the inverse cdf we let $F(x)=y$. The cdf maps $x\in(-\infty,\infty)$ to $y\in[0,1]$. By solving $F(x)=y$ with respect to $x$, we find that the inverse of the cdf is
+In order to find the inverse cdf we let $F(x)=y$. The cdf maps $x\in(-\infty,\infty)$ to $y\in[0,1)$. By solving $F(x)=y$ with respect to $x$, we find that the inverse of the cdf is
 $$
-  F^{-1}(y) = \begin{cases} (\frac{\alpha y}{c})^{1/\alpha}, & 0 \leq y \leq \frac{c}{\alpha} \\ -\ln(\frac{1}{\alpha}+\frac{1}{e}-\frac{y}{c}), & y > \frac{c}{\alpha} \end{cases}.
+  F^{-1}(y) = \begin{cases} (\frac{\alpha y}{c})^{1/\alpha}, & 0 < y \leq \frac{c}{\alpha} \\ -\ln(\frac{1}{\alpha}+\frac{1}{e}-\frac{y}{c}), & y > \frac{c}{\alpha} \end{cases}.
 $$
 
 
-** b)
+**b)**
 
 ```{r}
 # Function to sample from g using inverse cdf
@@ -122,7 +122,7 @@ print.mean.var(n, mean_bm, 0, var_bm, 1)  # Print values
 
 ## 4.
 
-```{r}
+```{r, results="hold"}
 # Function to generate a realization from d-variate normal distribution
 mult_normal = function(d, mu, sigma) {
   # mu is vector of means, must have length d
@@ -165,7 +165,7 @@ sigma_est
 
 # Problem B
 ## 1.
-** a)
+**a)**
 
 We consider a gamma distribution with parameters $\alpha\in (0,1)$ and $\beta=1$. It has probability density function
 $$
@@ -184,7 +184,7 @@ $$
   A(x) = \begin{cases} e^{-x}, & 0<x<1 \\ x^{\alpha-1}, & x\geq 1 \end{cases}.
 $$
 
-** b)
+**b)**
 
 ```{r}
 # Function to calculate the acceptance probability
@@ -226,7 +226,7 @@ print.mean.var(n, mean.emp, mean.theo, var.emp, var.theo)   # Printing values
 
 ## 2.
 
-** a)
+**a)**
 
 We consider a gamma distribution with parameters $\alpha>1$ and $\beta=1$, and we want to use the ratio of uniforms method to generate samples from this distribution. We define $C_f = \{(x_1,x_2):0\leq x_1\leq \sqrt{f^*(\frac{x_1}{x_2})}\}$ and
 $$
@@ -245,7 +245,7 @@ $$
 Since $f^*(x)=0$ for $x\leq0$, we immediately see that $b_- = 0$.
 
 
-** b)
+**b)**
 
 ```{r}
 # Function to generate n samples from ln(unif(0,ab))
