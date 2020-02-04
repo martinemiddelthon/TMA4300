@@ -61,7 +61,7 @@ In order to find the inverse cdf we let $F(x)=y$. The cdf maps $x\in(-\infty,\in
 $$
   F^{-1}(y) = \begin{cases} (\frac{\alpha y}{c})^{1/\alpha}, & 0 < y \leq \frac{c}{\alpha} \\ -\ln(\frac{1}{\alpha}+\frac{1}{e}-\frac{y}{c}), & y > \frac{c}{\alpha} \end{cases}.
 $$
-
+ 
 
 **b)**
 
