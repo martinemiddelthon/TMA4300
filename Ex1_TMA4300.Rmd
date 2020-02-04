@@ -1,7 +1,9 @@
 ---
 title: "Exercise 1 - TMA4300"
 author: "Helene Behrens and Martine Middelthon"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -445,13 +447,12 @@ $$
 $$
 From the change of variable theorem, we now get
 
-\begin{equation}
+$$
   f_X(x_1,\ldots,x_{K-1},v) = f_Z(x_1\cdot v, \ldots, x_{K-1}\cdot v,(1 - \sum_{k=1}^{K-1}x_k)\cdot v)\cdot v^{K-1}\\
   = e^{-(1 - \sum_{k=1}^{K-1}x_k)v}\frac{((1 - \sum_{k=1}^{K-1}x_k)v)^{\alpha_K-1}}{\Gamma(\alpha_K)}\prod_{k=1}^{K-1}\bigg(\frac{(v\cdot x_k)^{\alpha_k-1}}{\Gamma(\alpha_k)}e^{-x_k\cdot v}\bigg)\cdot v^{K-1}\\
   =e^{-v(1 - \sum_{k=1}^{K-1}x_k + \sum_{k=1}^{K-1}x_k)}\cdot v^{K-1 + \sum_{k=1}^{K}(\alpha_k -1)}\cdot \frac{(1 - \sum_{k=1}^{K-1}x_k)^{\alpha_K-1}}{\Gamma(\alpha_K)}\prod_{k=1}^{K-1}\frac{x_k^{\alpha_k -1}}{\Gamma(\alpha_k)}\\
   =e^{-v}\cdot v^{\sum_{k=1}^{K}(\alpha_k) - 1}\cdot \frac{(1 - \sum_{k=1}^{K-1}x_k)^{\alpha_K-1}}{\Gamma(\alpha_K)}\prod_{k=1}^{K-1}\frac{x_k^{\alpha_k -1}}{\Gamma(\alpha_k)}.
-  
-\end{equation}
+$$
 
 We now have the distribution of $(x_1,\ldots,x_{K-1},v)$ and integrate this over $v$ to get the desired distribution of $(x_1,\ldots,x_{K-1})$. As only the first two factors are dependent on $v$, we look at
 
@@ -460,9 +461,9 @@ $$
 $$
 Inserted into the distribution, we get
 
-\begin{equation}
+$$
 f_X(x_1,\ldots,x_{K-1}) = \Gamma(\sum_{k=1}^{K}\alpha_k)\cdot \frac{(1 - \sum_{k=1}^{K-1}x_k)^{\alpha_K-1}}{\Gamma(\alpha_K)}\prod_{k=1}^{K-1}\frac{x_k^{\alpha_k -1}}{\Gamma(\alpha_k)},
-\end{equation}
+$$
 
 which is the Dirichlet distribution with parameters $(\alpha_1,\ldots,\alpha_K).$
 
