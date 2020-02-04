@@ -494,11 +494,25 @@ abline(v = multbin.mean.exact$value, col="blue")    #Expectation from numerical 
 
 ## 3.
 
+The theoretical overall acceptance rate in importance sampling is given by $$\mathbf{P}(\text{acceptance}) = \frac{1}{c}.$$
+
 ```{r}
+#Average number of attempts before getting an accepted sample
 tries.per.sample = multbin.tries / length(multbin.sample)
 tries.per.sample
 
+#The theoretical value of the average number of samples needed to get acceptance:
+norm.const <- integrate(multbin.prior,0,1)    #the normalizing constant, f(y)
+lg.norm.const <- log(norm.const$value)        #log-scaling normalizing constant
+xmax = (15 + sqrt(53809)) / 394               #x-val wchich gives maximum f(theta|y)
+lg.overall.acceptance <- lnf(xmax)            #overall acceptance c, f(xmax)
+lgc <- lg.overall.acceptance - lg.norm.const  #normalized c, log-scale
+tries.per.sample.theo <- exp(lgc)             #taking the exponential of the log-scale c
+tries.per.sample.theo
+
 ```
+The actual average number of attempts before accepting a value as a sample conicides with the theoretical overall acceptance rate 1/c, i.e. the theoretical number of attemps before a sample is accepted. 
+
 
 ## 4.
 We want to use a new prior distribution of $\theta$: 
