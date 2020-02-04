@@ -260,8 +260,6 @@ inv.cdf.sampling = function(n, ln.ab) {
 samples.f = function(n, alpha) {
   vec = rep(0,n)                        # Vector for storing the samples
   i = 1                                 # Count index in vec
-  #a = ((alpha-1)/exp(1))^((alpha-1)/2)  # Value of a
-  #b = ((alpha+1)/exp(1))^((alpha+1)/2)  # Value of b_+
   lna = (alpha-1) / 2 * (log(alpha-1) -1) # Value of ln(a)
   lnb = (alpha+1) / 2 * (log(alpha+1) -1) # Value of ln(b_+)
   tries = 0                             # Count number of tries to generate n realizations
@@ -294,15 +292,14 @@ var.theo = alpha                        # Theoretical variance
 print.mean.var(n, mean.emp, mean.theo, var.emp, var.theo) # Printing values
 
 # Number of tries for different alphas
-#alphas = seq(1.1,2000,length.out = 20)
 n = 1000                                # Number of samples to generate
-alphas = seq(1.1,2000,length.out = 100)   # Values for alpha  
+alphas = seq(1.1,2000,length.out = 200)   # Values for alpha  
 tries = rep(0,length(alphas))           # Vector to store number of tries to generate n samples for different alphas
 for(i in 1:length(alphas)) {
   s = samples.f(1000,alphas[i])
   tries[i] = s[1]
 }
-plot(alphas,tries)                      # Plot of alpha vs number of tries
+plot(alphas, tries, type = "l")                      # Plot of alpha vs number of tries
 ```
 
 ## 3.
@@ -427,37 +424,37 @@ dirichlet.samples
 
 # Problem D
 ## 1.
+
 ```{r}
+# Function for ln(f(x))
+lnf = function(x) {
+  return(125*log(2+x) + 38*log(1-x) + 34*log(x))
+}
+
+# Function for ln of the acceptance probability
 ln.accprob = function(x) {
-  lnc = (15 + sqrt(53809)) / 394
-  return(125*log(2+x) + 38*log(1-x) + 34*log(x) - lnc)
+  xmax = (15 + sqrt(53809)) / 394   # x value that gives the maximum of ln(f(x))
+  lnc = lnf(xmax)                   # Maximum of ln(f(x))
+  return(lnf(x) - lnc)
 }
 
 multbinom = function(n) {
-  vec = rep(0,n)
+  vec = rep(0,n)              # Vector to store the n samples
   i = 1
+  tries = 0                   # Count number of tries
   while(i<=n) {
-    theta = runif(1)
-    lnu = log(runif(1))
-    lna = ln.accprob(theta)
-    if(lnu<=lna) {
+    theta = runif(1)          # Sample theta from proposal density
+    lnu = log(runif(1))       # ln of sample from unif(0,1)
+    lna = ln.accprob(theta)   # ln of acceptance probability
+    if(lnu<=lna) {            # Accept sample
       vec[i] = theta
       i = i + 1
-      }
+    }
+    tries = tries + 1
   }
-  return(vec)
+  return(c(tries,vec))
 }
 
-# Test 
-multbin.sample = multbinom(10000)
-multbin.mean.MC <- mean(multbin.sample)
-
-hist(multbin.sample)
-abline(v = multbin.mean.MC, col="red")
-
-mean(multbin.sample)
-var(multbin.sample)
-# evt regne ut teoretiske verdier? 
 ```
 
 ##2
@@ -470,6 +467,11 @@ To test the accuracy of this estimator, we find the solution of the integral num
 $f(\theta\mid\mathbf{y}) \propto f(\mathbf{y}\mid\theta)f(\theta),$ with $f(\mathbf{y})^{-1}$ as normalizing constant. We use $f(\mathbf{y})^{-1} = \int_0^1f(\mathbf{y}\mid\theta)f(\theta)$ with the uniform prior of $\theta$ and get 
 
 ```{r}
+multbin = multbinom(10000)
+multbin.tries = multbin[1]
+multbin.sample = multbin[-1]
+multbin.mean.MC <- mean(multbin.sample)
+
 #Function for integrand to get prior of y
 multbin.prior <- function(x){
   return((2+x)^125*(1-x)^38*x^34)
@@ -487,5 +489,14 @@ multbin.mean.exact
 #Histogram of sampled values of theta
 hist(multbin.sample)
 abline(v = multbin.mean.MC, col="red")        #Monte Carlo integration mean
-abline(v = multbin.mean.exact, col="blue")    #Expectation from numerical integration 
+abline(v = multbin.mean.exact$value, col="blue")    #Expectation from numerical integration 
 ```
+
+## 3.
+
+```{r}
+tries.per.sample = multbin.tries / length(multbin.sample)
+tries.per.sample
+
+```
+
