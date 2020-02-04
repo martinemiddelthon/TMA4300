@@ -502,3 +502,27 @@ tries.per.sample
 
 ```
 
+## 4.
+We want to use a new prior distribution of $\theta$: 
+$$\text{Beta}(\theta;1,5) = 5(1-\theta)^4, $$
+which gives the prosterior distribution of $\theta$ given $\mathbf{y}$
+$$f(\theta\mid\mathbf{y}) \propto f(\mathbf{y}\mid\theta)f(\theta) \propto f(\theta\mid\mathbf{y})|_{f(\theta) = \text{Beta}(1,1)}\cdot\text{Beta}(\theta;1,5).$$
+Then $$\mathbf{E}[\theta\mid\mathbf{y}] = \int_0^1\theta\cdot\text{Beta}(\theta;1,5)\cdot f(\theta\mid\mathbf{y})|_{f(\theta) = \text{Beta}(1,1)}\text{d}\theta,$$
+and we use the Monte Carlo estimator
+$$\hat{\mu}_{f(\theta)=\text{Beta}(1,5)} = \frac{1}{N}\sum_{i=1}^N\theta_i\cdot 5(1-\theta_i)^4,$$
+where the $\theta_i$ are the samples from ## 2. 
+
+We have $N$ samples og $\theta_i \sim f(\theta\mid\mathbf{y})|_{f(\theta) = \text{Beta}(1,1)},$ and we want to find the expectation 
+$$\mathbf{E}[\theta\mid\mathbf{y}]|_{f(\theta) = \text{Beta}(1,5)}.$$
+The self-normalizing importance sampling estimator gives us 
+$$\mathbf{E}[\theta\mid\mathbf{y}]|_{f(\theta) = \text{Beta}(1,5)} \approx \hat{\mu}_{IS} =  \frac{\sum_{i=1}^N\theta_i\cdot w(\theta_i)}{\sum_{i=1}^N w(\theta_i)}$$
+
+
+```{r}
+set.seed(50)
+#Monte Carlo estimator of theta given y, with Beta(1,5) as prior of theta
+multbin.beta15.IS <- sum(multbin.sample*(1-multbin.sample)^4)/sum((1-multbin.sample)^4)
+multbin.beta15.IS
+
+```
+The $\hat{\mu}_{IS}$ is approximately 0.6, which is also quite close to the expectation of $\theta$ given with a Beta(1,1) prior distribution. This is expected, as the prior distribution should have a decreasing influence on the prosterior distribution, with an increasing amount of observations. 
