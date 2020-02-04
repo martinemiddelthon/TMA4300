@@ -319,9 +319,10 @@ for(i in 1:length(alphas)) {
 }
 plot(alphas, tries, type = "l")                      # Plot of alpha vs number of tries
 ```
-For the 10000 samples from the $Gamma(4,1)$ distribution we make a histogram and compute the empirical and theoretical means and variances. The histogram looks as expected and the empirical mean and variance coincide with the theoretical values. 
+
+For the 10000 samples from the $Gamma(4,1)$ distribution we compute the empirical and theoretical means and variances. The empirical mean and variance coincide with the theoretical values. 
  
-We observe that the number of tries to generate 10000 samples as a function of $\alpha$ has an approximately logarithmic shape. 
+From the figure we observe that the number of tries to generate 10000 samples as a function of $\alpha$ has an approximately logarithmic shape. 
 
 ## 3.
 
@@ -415,10 +416,11 @@ From the change of variable theorem, we now get
 We now have the distribution of $(x_1,\ldots,x_{K-1},v)$ and integrate this over $v$ to get the desired distribution of $(x_1,\ldots,x_{K-1})$. As only the first two factors are dependent on $v$, we look at
 $$\int_0^\infty e^{-v}\cdot v^{\sum_{k=1}^{K}(\alpha_k) - 1}\text{d}v = \Gamma(\sum_{k=1}^{K}\alpha_k).$$
 Inserted into the distribution, we get
-$$\begin{equation}
+
+\begin{equation}
 f_X(x_1,\ldots,x_{K-1}) = \Gamma(\sum_{k=1}^{K}\alpha_k)\cdot \frac{(1 - \sum_{k=1}^{K-1}x_k)^{\alpha_K-1}}{\Gamma(\alpha_K)}\prod_{k=1}^{K-1}\frac{x_k^{\alpha_k -1}}{\Gamma(\alpha_k)},
 \end{equation}
-$$
+
 which is the Dirichlet distribution with parameters $(\alpha_1,\ldots,\alpha_K).$
 
 ## 2.
