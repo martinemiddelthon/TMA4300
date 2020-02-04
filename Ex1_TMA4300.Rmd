@@ -498,5 +498,7 @@ abline(v = multbin.mean.exact$value, col="blue")    #Expectation from numerical 
 tries.per.sample = multbin.tries / length(multbin.sample)
 tries.per.sample
 
+
+
 ```
 
