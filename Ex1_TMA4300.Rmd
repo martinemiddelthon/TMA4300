@@ -364,45 +364,85 @@ We generate 10000 samples from the gamma distribution with $\beta=2$ and differe
 # Problem C
 
 We define
-$$x_k = \frac{z_k}{z_1 + \ldots + z_K},$$ where $z_k$ is gamma distributed with parameters $\alpha_k, 1$. Assuming the $z_k;\;k=1,\ldots,K$ are independent, they have joint distribution:
-$$f_Z(z_1,\ldots,z_K;\alpha_1,\ldots,\alpha_K,1) = \prod_{k=1}^{K}\bigg(\frac{1}{\Gamma(\alpha_k)}z_k^{\alpha_k-1}e^{-z_k}\bigg).$$
+$$
+x_k = \frac{z_k}{z_1 + \ldots + z_K},
+$$
+where $z_k$ is gamma distributed with parameters $\alpha_k, 1$. Assuming the $z_k;\;k=1,\ldots,K$ are independent, they have joint distribution:
+
+$$
+f_Z(z_1,\ldots,z_K;\alpha_1,\ldots,\alpha_K,1) = \prod_{k=1}^{K}\bigg(\frac{1}{\Gamma(\alpha_k)}z_k^{\alpha_k-1}e^{-z_k}\bigg).
+$$
+
 We start by defining a mapping $g:(z_1,\ldots,z_K)\rightarrow(x_1,\ldots,x_{K-1},v),$ where $v = z_1+\ldots+z_K$:
-$$(x_1,\ldots,x_{K-1},v) = g(z_1,\ldots,z_K) = \big(\frac{z_1}{\sum_{k=1}^Kz_k},\ldots,\frac{z_{K-1}}{\sum_{k=1}^Kz_k},\sum_{k=1}^Kz_k\big).$$
+
+$$
+(x_1,\ldots,x_{K-1},v) = g(z_1,\ldots,z_K) = \big(\frac{z_1}{\sum_{k=1}^Kz_k},\ldots,\frac{z_{K-1}}{\sum_{k=1}^Kz_k},\sum_{k=1}^Kz_k\big).
+$$
+
 Then $(z_1,\ldots, z_K) = g^{-1}(x_1,\ldots,x_{K-1},v) = \big(x_1\cdot v,\ldots,x_{K-1}\cdot v, (1 - \sum_{k=1}^{K-1}x_k)\cdot v\big).$
 From the change of variables theorem, we have that, provided a relation $(x_,\ldots,x_n) = g(z_1,\ldots,z_n)$,
-$$f_X(x_1,\ldots,x_n) = f_Z\big(g^{-1}(x_1,\ldots,x_n)\big)\mid\mathbf{J}\mid,$$
+
+$$
+f_X(x_1,\ldots,x_n) = f_Z\big(g^{-1}(x_1,\ldots,x_n)\big)\mid\mathbf{J}\mid,
+$$
 where $\mid\mathbf{J}\mid$ is the Jacobian of $g^{-1}$ with respect to $\mathbf{X}.$ In our case, this is:
-$$\mathbf{J} = \begin{bmatrix} \frac{\partial g^{-1}_1}{\partial x_1}& \cdots & \frac{\partial g_1^{-1}}{\partial x_{K-1}} & \frac{\partial g_1^{-1}}{\partial v}\\
+
+$$
+\mathbf{J} = \begin{bmatrix} \frac{\partial g^{-1}_1}{\partial x_1}& \cdots & \frac{\partial g_1^{-1}}{\partial x_{K-1}} & \frac{\partial g_1^{-1}}{\partial v}\\
 \vdots & \ddots & & \vdots\\
 \frac{\partial g^{-1}_K}{\partial x_1} & \cdots & \frac{\partial g^{-1}_K}{\partial x_{K-1}} & \frac{\partial g^{-1}_K}{\partial v}
-\end{bmatrix},$$
+\end{bmatrix},
+$$
+
 Looking at the different elements of the Jacobian:
-$$\frac{\partial g_i^{-1}}{\partial x_j} = \frac{\partial}{\partial x_j}x_i\cdot v = \{v \::\: i=j,0\::\:\text{otherwise}\},$$
-$$\frac{\partial g_K^{-1}}{\partial x_i} = \frac{\partial}{\partial x_i}(1 - \sum_{k=1}^{K-1}x_k)\cdot v = -v,$$
-$$\frac{\partial g_K^{-1}}{\partial v} = \frac{\partial}{\partial v}(1 - \sum_{k=1}^{K-1}x_k)\cdot v = (1 - \sum_{k=1}^{K-1}x_k),$$
+$$
+  \frac{\partial g_i^{-1}}{\partial x_j} = \frac{\partial}{\partial x_j}x_i\cdot v = \{v \::\: i=j,0\::\:\text{otherwise}\},
+$$
 
-$$\frac{\partial g_k^{-1}}{\partial v} = \frac{\partial}{\partial v} x_k\cdot v = x_k.$$ This gives us the Jacobi matrix 
+$$
+  \frac{\partial g_K^{-1}}{\partial x_i} = \frac{\partial}{\partial x_i}(1 - \sum_{k=1}^{K-1}x_k)\cdot v = -v,
+$$
+$$
+  \frac{\partial g_K^{-1}}{\partial v} = \frac{\partial}{\partial v}(1 - \sum_{k=1}^{K-1}x_k)\cdot v = (1 - \sum_{k=1}^{K-1}x_k),
+$$
 
-$$\mathbf{J} = \begin{bmatrix} v& 0 & \cdots & 0 & x_1\\
+$$
+  \frac{\partial g_k^{-1}}{\partial v} = \frac{\partial}{\partial v} x_k\cdot v = x_k.
+$$ 
+This gives us the Jacobi matrix 
+
+$$
+\mathbf{J} = \begin{bmatrix} v& 0 & \cdots & 0 & x_1\\
 \vdots & \ddots & & & \vdots\\
 0 & \cdots & \cdots & v & x_{K-1}\\
 -v & \cdots & \cdots & -v & (1 - \sum_{k=1}^{K-1}x_k)
-\end{bmatrix},$$
+\end{bmatrix},
+$$
 and we need the determinant of this. We observe that this matrix is a block matrix on the form 
-$$\begin{bmatrix}
+$$
+\begin{bmatrix}
 A & B \\
 C & D
-\end{bmatrix},$$
+\end{bmatrix},
+$$
 where A is a $K-1\times K-1$ diagonal matrix with $v$ on the diagonals, B is $[x_1,\ldots,x_{K-1}]^\text{T},$ C is the $1\times K- 1$ vector $[-v,\ldots,-v]$ and D is $(1 - \sum_{k=1}^{K-1}x_k)$. For this type of matrices, we have that 
-$$\det\bigg(\begin{bmatrix}
+$$
+\det\bigg(\begin{bmatrix}
 A & B \\
 C & D
-\end{bmatrix}\bigg) = (D - CA^{-1}B)\det(A).$$ 
+\end{bmatrix}\bigg) = (D - CA^{-1}B)\det(A).
+$$ 
 Since A is diagonal with entries $v$, $\det(A) = v^{K-1}.$ Furthermore, $A^{-1}$ is a diagonal matric with $1/v$ as entries. This gives us
-$$D - CA^{-1}B = (1 - \sum_{k=1}^{K-1}x_k) - [-v,\ldots,-v]\times\begin{bmatrix}\frac{1}{v}&&0\\&\ddots & \\ 0& & \frac{1}{v}\end{bmatrix} \times[x_1,\ldots,x_{K-1}]^{\text{T}}$$
-$$=1 - \sum_{k=1}^{K-1}x_k -(-\sum_{k=1}^{K-1}x_k) = 1.$$
+$$
+D - CA^{-1}B = (1 - \sum_{k=1}^{K-1}x_k) - [-v,\ldots,-v]\times\begin{bmatrix}\frac{1}{v}&&0\\&\ddots & \\ 0& & \frac{1}{v}\end{bmatrix} \times[x_1,\ldots,x_{K-1}]^{\text{T}}
+$$
+$$
+=1 - \sum_{k=1}^{K-1}x_k -(-\sum_{k=1}^{K-1}x_k) = 1.
+$$
 We get 
-$$\mid\mathbf{J}\mid = v^{K-1}.$$
+$$
+\mid\mathbf{J}\mid = v^{K-1}.
+$$
 From the change of variable theorem, we now get
 
 \begin{equation}
@@ -414,7 +454,10 @@ From the change of variable theorem, we now get
 \end{equation}
 
 We now have the distribution of $(x_1,\ldots,x_{K-1},v)$ and integrate this over $v$ to get the desired distribution of $(x_1,\ldots,x_{K-1})$. As only the first two factors are dependent on $v$, we look at
-$$\int_0^\infty e^{-v}\cdot v^{\sum_{k=1}^{K}(\alpha_k) - 1}\text{d}v = \Gamma(\sum_{k=1}^{K}\alpha_k).$$
+
+$$
+\int_0^\infty e^{-v}\cdot v^{\sum_{k=1}^{K}(\alpha_k) - 1}\text{d}v = \Gamma(\sum_{k=1}^{K}\alpha_k).
+$$
 Inserted into the distribution, we get
 
 \begin{equation}
@@ -485,9 +528,14 @@ multbinom = function(n) {
 
 ## 2.
 The expected value of $\theta$, conditioned on $\mathbf{y}$ is 
-$$\mathbf{E}[\theta\mid\mathbf{y}] = \int_0^1\theta f(\theta\mid \mathbf{y})\text{d}\theta,$$
+$$
+\mathbf{E}[\theta\mid\mathbf{y}] = \int_0^1\theta f(\theta\mid \mathbf{y})\text{d}\theta,
+$$
 which gives the Monte Carlo estimator for the expectation 
-$$\hat{\mu} = \frac{1}{N}\sum_{i=1}^{N}\theta_i,$$ where $\theta_i$ are sampeled from $f(\theta\mid\mathbf{y})$ $N$ repetitions. 
+$$
+\hat{\mu} = \frac{1}{N}\sum_{i=1}^{N}\theta_i,
+$$ 
+where $\theta_i$ are sampeled from $f(\theta\mid\mathbf{y})$ N repetitions. 
 
 To test the accuracy of this estimator, we find the solution of the integral numerically. We have that 
 $f(\theta\mid\mathbf{y}) \propto f(\mathbf{y}\mid\theta)f(\theta),$ with $f(\mathbf{y})^{-1}$ as normalizing constant. We use $f(\mathbf{y})^{-1} = \int_0^1f(\mathbf{y}\mid\theta)f(\theta)$ with the uniform prior of $\theta$ and get 
