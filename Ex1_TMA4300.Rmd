@@ -527,7 +527,7 @@ tries.per.sample
 ## 4.
 We want to use a new prior distribution of $\theta$: 
 $$\text{Beta}(\theta;1,5) = 5(1-\theta)^4. $$
-
+ 
 We have $N$ samples og $\theta_i \sim f(\theta\mid\mathbf{y})|_{f(\theta) = \text{Beta}(1,1)},$ and we want to find the expectation 
 $$\mathbf{E}[\theta\mid\mathbf{y}]|_{f(\theta) = \text{Beta}(1,5)}.$$
 The self-normalizing importance sampling estimator gives us 
