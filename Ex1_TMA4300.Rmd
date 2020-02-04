@@ -28,12 +28,14 @@ print.mean.var = function(n, m.emp, m.th, v.emp, v.th) {
 }
 
 # Check function
+set.seed(0)
 rate = 4                                        # Set rate parameter
 n = 10000                                       # Number of samples
 exp.sample = samples_exp(rate, n)               # Sample
 hist(exp.sample)                                # Histogram of sample
 
 mean.emp.exp = mean(exp.sample)                 # Empirical mean
+abline(v = mean.emp.exp, col = "red")
 mean.th.exp = 1 / rate                          # Theoretical mean
 
 var.emp.exp = var(exp.sample)                   # Empirical variance
@@ -41,6 +43,7 @@ var.th.exp = 1 / rate^2                         # Theoretical variance
 
 print.mean.var(n, mean.emp.exp, mean.th.exp, var.emp.exp, var.th.exp)  # Print values
 ```
+We generate 10000 samples from the exponential distribution with rate $\lambda=4$ and make a histogram and compute the empirical and theoretical means and variances to test the algorithm. The histogram looks as expected and the empirical and theoretical values for the mean and variance coincides.
 
 ## 2.
 
@@ -76,6 +79,7 @@ samples_g = function(alpha, n) {
 }
 
 # Check function
+set.seed(1)
 alpha = 0.8                               # Set parameter
 c = alpha * exp(1) / (alpha + exp(1))     # Normalizing constant
 n = 10000                                 # Number of samples
@@ -83,6 +87,7 @@ samples.g = samples_g(alpha, n)           # Sampling from g
 hist(samples.g)                           # Histogram of samples
 
 mean.emp.g = mean(samples.g)                      # Empirical mean
+abline(v = mean.emp.g, col = "red")
 mean.theo.g = c * (1/(alpha+1) + 2*exp(-1))       # Theoretical mean
 
 var.emp.g = var(samples.g)                                  # Empirical variance
@@ -90,6 +95,7 @@ var.theo.g = c * (1/(alpha+2) + 5*exp(-1)) - mean.theo.g^2  # Theoretical varian
 
 print.mean.var(n, mean.emp.g, mean.theo.g, var.emp.g, var.theo.g)   # Print values
 ```
+For the 10000 samples from $g$ we make a histogram and compute the empirical and theoretical means and variances. The histogram looks as expected and the empirical mean and variance seems reasonable.
 
 ## 3.
 
@@ -109,16 +115,18 @@ boxmuller = function(n) {
 }
 
 # Check function
+set.seed(10)
 n = 10000                       # Number of samples
 bm.samples = boxmuller(n)       # Sampling from N(0,1)
 hist(bm.samples)                # Histogram of samples
 
 mean_bm = mean(bm.samples)      # Empirical mean
+abline(v = mean_bm, col="red")
 var_bm = var(bm.samples)        # Empirical variance
 
 print.mean.var(n, mean_bm, 0, var_bm, 1)  # Print values
 ```
-
+For the 10000 samples from the standard normal distribution using the Box-Müller algorithm we make a histogram and compute the empirical and theoretical means and variances. The histogram looks as expected and the empirical mean and variance coincide with the theoretical values.
 
 ## 4.
 
@@ -141,6 +149,7 @@ mu = c(1,2)
 sigma = cbind(c(1,0.5),c(0.5,1))
 
 # Estimate mean and empirical variance
+set.seed(50)
 n = 10000                     # Number of realizations
 mu_est = rep(0,length(mu))    
 multnor.sample = matrix(NA, n, length(mu))
@@ -161,7 +170,7 @@ sigma
 cat('\nEstimated covariance matrix:\n')
 sigma_est
 ```
-
+We compute the estimated mean vector and covariance matrix from 10000 samples for a 2-variate normal distribution. These seems to coincide with the true values.
 
 # Problem B
 ## 1.
@@ -210,11 +219,14 @@ gamma_rejsamp = function(n, alpha) {
 }
 
 # Check function
+set.seed(60)
 alpha = 0.5     # Set parameter
 n = 10000       # Number of samples
 gamma.sample = gamma_rejsamp(n, alpha)    # Generate samples
+hist(gamma.sample)
 
 mean.emp = mean(gamma.sample)   # Empirical mean
+abline(v = mean.emp, col = "red")
 mean.theo = alpha               # Theoretical mean
 
 var.emp = var(gamma.sample)     # Empirical variance
@@ -222,6 +234,7 @@ var.theo = alpha                # Theoretical variance
 
 print.mean.var(n, mean.emp, mean.theo, var.emp, var.theo)   # Printing values
 ```
+For the 10000 samples from the $Gamma(0.5,1)$ distribution we make a histogram and compute the empirical and theoretical means and variances. The histogram looks as expected and the empirical mean and variance coincide with the theoretical values.
 
 
 ## 2.
@@ -278,12 +291,14 @@ samples.f = function(n, alpha) {
 }
 
 # Check function
+set.seed(100)
 alpha = 4       # Set parameter
 n = 10000       # Number of samples
 gamma.sample = samples.f(n,alpha)[-1]   # Generate samples
 hist(gamma.sample)                      # Histogram of samples
 
 mean.emp = mean(gamma.sample)           # Empirical mean
+abline(v = mean.emp, col = "red")
 mean.theo = alpha                       # Theoretical mean
 
 var.emp = var(gamma.sample)             # Empirical variance
@@ -301,6 +316,9 @@ for(i in 1:length(alphas)) {
 }
 plot(alphas, tries, type = "l")                      # Plot of alpha vs number of tries
 ```
+For the 10000 samples from the $Gamma(4,1)$ distribution we make a histogram and compute the empirical and theoretical means and variances. The histogram looks as expected and the empirical mean and variance coincide with the theoretical values.
+
+We observe that the number of tries to generate 10000 samples as a function of $\alpha$ has an approximately logarithmic shape.
 
 ## 3.
 
@@ -327,6 +345,7 @@ test.gam = function(n, alpha, beta) {
 }
 
 # Set parameters
+set.seed(30)
 n = 10000
 alpha = c(0.5, 1, 10)
 beta = 2
@@ -336,6 +355,8 @@ test.gam(n, alpha[2], beta)
 test.gam(n, alpha[3], beta)
 
 ```
+We generate 10000 samples from the gamma distribution with different parameters and compute the empirical and theoretical means and variances. The empirical mean and variance seems to coincide pretty well with the theoretical values in all cases.
+
 # Problem C
 
 We define
@@ -379,7 +400,7 @@ $$=1 - \sum_{k=1}^{K-1}x_k -(-\sum_{k=1}^{K-1}x_k) = 1.$$
 We get 
 $$\mid\mathbf{J}\mid = v^{K-1}.$$
 From the change of variable theorem, we now get
-$$
+
 \begin{equation}
   f_X(x_1,\ldots,x_{K-1},v) = f_Z(x_1\cdot v, \ldots, x_{K-1}\cdot v,(1 - \sum_{k=1}^{K-1}x_k)\cdot v)\cdot v^{K-1}\\
   = e^{-(1 - \sum_{k=1}^{K-1}x_k)v}\frac{((1 - \sum_{k=1}^{K-1}x_k)v)^{\alpha_K-1}}{\Gamma(\alpha_K)}\prod_{k=1}^{K-1}\bigg(\frac{(v\cdot x_k)^{\alpha_k-1}}{\Gamma(\alpha_k)}e^{-x_k\cdot v}\bigg)\cdot v^{K-1}\\
@@ -387,7 +408,8 @@ $$
   =e^{-v}\cdot v^{\sum_{k=1}^{K}(\alpha_k) - 1}\cdot \frac{(1 - \sum_{k=1}^{K-1}x_k)^{\alpha_K-1}}{\Gamma(\alpha_K)}\prod_{k=1}^{K-1}\frac{x_k^{\alpha_k -1}}{\Gamma(\alpha_k)}
   
 \end{equation}
-$$
+
+
 We now have the distribution of $(x_1,\ldots,x_{K-1},v)$ and integrate this over $v$ to get the desired distribution of $(x_1,\ldots,x_{K-1})$. As only the first two factors are dependent on $v$, we look at
 $$\int_0^\infty e^{-v}\cdot v^{\sum_{k=1}^{K}(\alpha_k) - 1}\text{d}v = \Gamma(\sum_{k=1}^{K}\alpha_k).$$
 Inserted into the distribution, we get
