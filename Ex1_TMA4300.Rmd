@@ -461,17 +461,31 @@ var(multbin.sample)
 ```
 
 ##2
+The expected value of $\theta$, conditioned on $\mathbf{y}$ is 
+$$\mathbf{E}[\theta\mid\mathbf{y}] = \int_0^1\theta f(\theta\mid \mathbf{y})\text{d}\theta,$$
+which gives the Monte Carlo estimator for the expectation 
+$$\hat{\mu} = \frac{1}{N}\sum_{i=1}^{N}\theta_i,$$ where $\theta_i$ are sampeled from $f(\theta\mid\mathbf{y})$ $N$ repetitions. 
+
+To test the accuracy of this estimator, we find the solution of the integral numerically. We have that 
+$f(\theta\mid\mathbf{y}) \propto f(\mathbf{y}\mid\theta)f(\theta),$ with $f(\mathbf{y})^{-1}$ as normalizing constant. We use $f(\mathbf{y})^{-1} = \int_0^1f(\mathbf{y}\mid\theta)f(\theta)$ with the uniform prior of $\theta$ and get 
 
 ```{r}
+#Function for integrand to get prior of y
 multbin.prior <- function(x){
   return((2+x)^125*(1-x)^38*x^34)
 }
 
+#function for integrand to get expectation of theta
 multbin.integrand <- function(x){
-  c <- integrate(multbin.prior,0,1)
-  return((1/(c$value))*x*(2+x)^125*(1-x)^38*x^34)
+  c <- integrate(multbin.prior,0,1)                 #gives f(y)
+  return((1/(c$value))*x*(2+x)^125*(1-x)^38*x^34)   #gives theta*f(theta|y)
 }
 
-multbin.mean.exact <- integrate(multbin.integrand,0,1)
+multbin.mean.exact <- integrate(multbin.integrand,0,1)  #numerical integral, theta from 0 to 1
 multbin.mean.exact
+
+#Histogram of sampled values of theta
+hist(multbin.sample)
+abline(v = multbin.mean.MC, col="red")        #Monte Carlo integration mean
+abline(v = multbin.mean.exact, col="blue")    #Expectation from numerical integration 
 ```
