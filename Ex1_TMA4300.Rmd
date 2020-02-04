@@ -393,7 +393,7 @@ $$
 \mathbf{J} = \begin{bmatrix} \frac{\partial g^{-1}_1}{\partial x_1}& \cdots & \frac{\partial g_1^{-1}}{\partial x_{K-1}} & \frac{\partial g_1^{-1}}{\partial v}\\
 \vdots & \ddots & & \vdots\\
 \frac{\partial g^{-1}_K}{\partial x_1} & \cdots & \frac{\partial g^{-1}_K}{\partial x_{K-1}} & \frac{\partial g^{-1}_K}{\partial v}
-\end{bmatrix},
+\end{bmatrix}.
 $$
 
 Looking at the different elements of the Jacobian:
@@ -434,7 +434,7 @@ A & B \\
 C & D
 \end{bmatrix}\bigg) = (D - CA^{-1}B)\det(A).
 $$ 
-Since A is diagonal with entries $v$, $\det(A) = v^{K-1}.$ Furthermore, $A^{-1}$ is a diagonal matric with $1/v$ as entries. This gives us
+Since A is diagonal with entries $v$, $\det(A) = v^{K-1}.$ Furthermore, $A^{-1}$ is a diagonal matrix with $1/v$ as entries. This gives us
 $$
 D - CA^{-1}B = (1 - \sum_{k=1}^{K-1}x_k) - [-v,\ldots,-v]\times\begin{bmatrix}\frac{1}{v}&&0\\&\ddots & \\ 0& & \frac{1}{v}\end{bmatrix} \times[x_1,\ldots,x_{K-1}]^{\text{T}}
 $$
@@ -448,10 +448,16 @@ $$
 From the change of variable theorem, we now get
 
 $$
-  f_X(x_1,\ldots,x_{K-1},v) = f_Z(x_1\cdot v, \ldots, x_{K-1}\cdot v,(1 - \sum_{k=1}^{K-1}x_k)\cdot v)\cdot v^{K-1}\\
-  = e^{-(1 - \sum_{k=1}^{K-1}x_k)v}\frac{((1 - \sum_{k=1}^{K-1}x_k)v)^{\alpha_K-1}}{\Gamma(\alpha_K)}\prod_{k=1}^{K-1}\bigg(\frac{(v\cdot x_k)^{\alpha_k-1}}{\Gamma(\alpha_k)}e^{-x_k\cdot v}\bigg)\cdot v^{K-1}\\
-  =e^{-v(1 - \sum_{k=1}^{K-1}x_k + \sum_{k=1}^{K-1}x_k)}\cdot v^{K-1 + \sum_{k=1}^{K}(\alpha_k -1)}\cdot \frac{(1 - \sum_{k=1}^{K-1}x_k)^{\alpha_K-1}}{\Gamma(\alpha_K)}\prod_{k=1}^{K-1}\frac{x_k^{\alpha_k -1}}{\Gamma(\alpha_k)}\\
-  =e^{-v}\cdot v^{\sum_{k=1}^{K}(\alpha_k) - 1}\cdot \frac{(1 - \sum_{k=1}^{K-1}x_k)^{\alpha_K-1}}{\Gamma(\alpha_K)}\prod_{k=1}^{K-1}\frac{x_k^{\alpha_k -1}}{\Gamma(\alpha_k)}.
+f_X(x_1,\ldots,x_{K-1},v) = f_Z(x_1\cdot v, \ldots, x_{K-1}\cdot v,(1 - \sum_{k=1}^{K-1}x_k)\cdot v)\cdot v^{K-1}
+$$
+$$
+= e^{-(1 - \sum_{k=1}^{K-1}x_k)v}\frac{((1 - \sum_{k=1}^{K-1}x_k)v)^{\alpha_K-1}}{\Gamma(\alpha_K)}\prod_{k=1}^{K-1}\bigg(\frac{(v\cdot x_k)^{\alpha_k-1}}{\Gamma(\alpha_k)}e^{-x_k\cdot v}\bigg)\cdot v^{K-1}
+$$
+$$
+=e^{-v(1 - \sum_{k=1}^{K-1}x_k + \sum_{k=1}^{K-1}x_k)}\cdot v^{K-1 + \sum_{k=1}^{K}(\alpha_k -1)}\cdot \frac{(1 - \sum_{k=1}^{K-1}x_k)^{\alpha_K-1}}{\Gamma(\alpha_K)}\prod_{k=1}^{K-1}\frac{x_k^{\alpha_k -1}}{\Gamma(\alpha_k)}
+$$
+$$
+=e^{-v}\cdot v^{\sum_{k=1}^{K}(\alpha_k) - 1}\cdot \frac{(1 - \sum_{k=1}^{K-1}x_k)^{\alpha_K-1}}{\Gamma(\alpha_K)}\prod_{k=1}^{K-1}\frac{x_k^{\alpha_k -1}}{\Gamma(\alpha_k)}.
 $$
 
 We now have the distribution of $(x_1,\ldots,x_{K-1},v)$ and integrate this over $v$ to get the desired distribution of $(x_1,\ldots,x_{K-1})$. As only the first two factors are dependent on $v$, we look at
