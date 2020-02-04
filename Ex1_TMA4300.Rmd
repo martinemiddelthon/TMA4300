@@ -477,19 +477,19 @@ which is the Dirichlet distribution with parameters $(\alpha_1,\ldots,\alpha_K).
 
 ```{r}
 #Function for generating one Diriclet distributed variable with parameter alpha:
-dirichlet <- function(alphas){
-  zs = rep(0,length(alphas))
+dirichlet <- function(alphas){      
+  zs = rep(0,length(alphas))        # initiating vector for z_k
   for (k in 1:length(alphas)){
-    zs[k] <- gamma(1,alphas[k],1)
+    zs[k] <- gamma(1,alphas[k],1)   # one sample of gamma(alpha_k,1)
   }
-  return(zs/sum(zs))
+  return(zs/sum(zs))                #return vector of x_k's
 }
 
 #Testing
-K = 3                         # setting arbitrary parameter K
-alphas <- c(0.5,1.0,1.5)    # setting arbitrary alpha parameters
-mean.theo <- alphas/sum(alphas)   # theoretical mean 
-dirichlet.samples <- rep(0,K)   # initiate samples 
+K = 3                                   # setting arbitrary parameter K
+alphas <- c(0.5,1.0,1.5)                # setting arbitrary alpha parameters
+mean.theo <- alphas/sum(alphas)         # theoretical mean 
+dirichlet.samples <- rep(0,K)           # initiate samples 
 for (i in 1:300){dirichlet.samples = dirichlet.samples + dirichlet(alphas)}   # sample from Diriclet 300 times
 mean.diriclet = dirichlet.samples/300   # sample mean
 cat("The theoretical means for the Diriclet distribution with K=3, alpha=(0.5,1.0,1.5) \n")
@@ -550,10 +550,10 @@ To test the accuracy of this estimator, we find the solution of the integral num
 $f(\theta\mid\mathbf{y}) \propto f(\mathbf{y}\mid\theta)f(\theta),$ with $f(\mathbf{y})^{-1}$ as normalizing constant. We use $f(\mathbf{y})^{-1} = \int_0^1f(\mathbf{y}\mid\theta)f(\theta)$ with the uniform prior of $\theta$ and get 
 
 ```{r}
-multbin = multbinom(10000)            #sample from multinomial
-multbin.tries = multbin[1]            #no of attempts
-multbin.sample = multbin[-1]          #samples
-multbin.mean.MC <- mean(multbin.sample)   #Monte Carlo estimator of exepctation 
+multbin = multbinom(10000)                # sample from multinomial
+multbin.tries = multbin[1]                # no of attempts
+multbin.sample = multbin[-1]              # samples
+multbin.mean.MC <- mean(multbin.sample)   # Monte Carlo estimator of exepctation 
 
 #Function for integrand to get prior of y
 multbin.prior <- function(x){
@@ -562,17 +562,17 @@ multbin.prior <- function(x){
 
 #function for integrand to get expectation of theta
 multbin.integrand <- function(x){
-  c <- integrate(multbin.prior,0,1)                 #gives f(y)
-  return((1/(c$value))*x*(2+x)^125*(1-x)^38*x^34)   #gives theta*f(theta|y)
+  c <- integrate(multbin.prior,0,1)                 # gives f(y)
+  return((1/(c$value))*x*(2+x)^125*(1-x)^38*x^34)   # gives theta*f(theta|y)
 }
 
-multbin.mean.exact <- integrate(multbin.integrand,0,1)  #numerical integral, theta from 0 to 1
+multbin.mean.exact <- integrate(multbin.integrand,0,1)  # numerical integral, theta from 0 to 1
 multbin.mean.exact
 
 #Histogram of sampled values of theta
 hist(multbin.sample)
-abline(v = multbin.mean.MC, col="red")        #Monte Carlo integration mean
-abline(v = multbin.mean.exact$value, col="blue")    #Expectation from numerical integration 
+abline(v = multbin.mean.MC, col="red")              # Monte Carlo integration mean
+abline(v = multbin.mean.exact$value, col="blue")    # Expectation from numerical integration 
 ```
 
 ## 3.
@@ -585,12 +585,12 @@ tries.per.sample = multbin.tries / length(multbin.sample)
 tries.per.sample
 
 #The theoretical value of the average number of samples needed to get acceptance:
-norm.const <- integrate(multbin.prior,0,1)    #the normalizing constant, f(y)
-lg.norm.const <- log(norm.const$value)        #log-scaling normalizing constant
-xmax = (15 + sqrt(53809)) / 394               #x-val wchich gives maximum f(theta|y)
-lg.overall.acceptance <- lnf(xmax)            #overall acceptance c, f(xmax)
-lgc <- lg.overall.acceptance - lg.norm.const  #normalized c, log-scale
-tries.per.sample.theo <- exp(lgc)             #taking the exponential of the log-scale c
+norm.const <- integrate(multbin.prior,0,1)    # the normalizing constant, f(y)
+lg.norm.const <- log(norm.const$value)        # log-scaling normalizing constant
+xmax = (15 + sqrt(53809)) / 394               # x-val wchich gives maximum f(theta|y)
+lg.overall.acceptance <- lnf(xmax)            # overall acceptance c, f(xmax)
+lgc <- lg.overall.acceptance - lg.norm.const  # normalized c, log-scale
+tries.per.sample.theo <- exp(lgc)             # taking the exponential of the log-scale c
 tries.per.sample.theo
 
 ```
