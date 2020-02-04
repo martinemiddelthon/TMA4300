@@ -397,8 +397,8 @@ where A is a $K-1\times K-1$ diagonal matrix with $v$ on the diagonals, B is $[x
 $$\det\bigg(\begin{bmatrix}
 A & B \\
 C & D
-\end{bmatrix}\bigg) = (D - CA^{-1}B)\det(A)$$. 
-Since A is diagonal with entries $v$, $\det(A) = v^{K-1}.$ Furthermore, A^{-1} is a diagonal matric with $1/v$ as entries. This gives us
+\end{bmatrix}\bigg) = (D - CA^{-1}B)\det(A).$$ 
+Since A is diagonal with entries $v$, $\det(A) = v^{K-1}.$ Furthermore, $A^{-1}$ is a diagonal matric with $1/v$ as entries. This gives us
 $$D - CA^{-1}B = (1 - \sum_{k=1}^{K-1}x_k) - [-v,\ldots,-v]\times\begin{bmatrix}\frac{1}{v}&&0\\&\ddots & \\ 0& & \frac{1}{v}\end{bmatrix} \times[x_1,\ldots,x_{K-1}]^{\text{T}}$$
 $$=1 - \sum_{k=1}^{K-1}x_k -(-\sum_{k=1}^{K-1}x_k) = 1.$$
 We get 
@@ -409,7 +409,7 @@ From the change of variable theorem, we now get
   f_X(x_1,\ldots,x_{K-1},v) = f_Z(x_1\cdot v, \ldots, x_{K-1}\cdot v,(1 - \sum_{k=1}^{K-1}x_k)\cdot v)\cdot v^{K-1}\\
   = e^{-(1 - \sum_{k=1}^{K-1}x_k)v}\frac{((1 - \sum_{k=1}^{K-1}x_k)v)^{\alpha_K-1}}{\Gamma(\alpha_K)}\prod_{k=1}^{K-1}\bigg(\frac{(v\cdot x_k)^{\alpha_k-1}}{\Gamma(\alpha_k)}e^{-x_k\cdot v}\bigg)\cdot v^{K-1}\\
   =e^{-v(1 - \sum_{k=1}^{K-1}x_k + \sum_{k=1}^{K-1}x_k)}\cdot v^{K-1 + \sum_{k=1}^{K}(\alpha_k -1)}\cdot \frac{(1 - \sum_{k=1}^{K-1}x_k)^{\alpha_K-1}}{\Gamma(\alpha_K)}\prod_{k=1}^{K-1}\frac{x_k^{\alpha_k -1}}{\Gamma(\alpha_k)}\\
-  =e^{-v}\cdot v^{\sum_{k=1}^{K}(\alpha_k) - 1}\cdot \frac{(1 - \sum_{k=1}^{K-1}x_k)^{\alpha_K-1}}{\Gamma(\alpha_K)}\prod_{k=1}^{K-1}\frac{x_k^{\alpha_k -1}}{\Gamma(\alpha_k)}
+  =e^{-v}\cdot v^{\sum_{k=1}^{K}(\alpha_k) - 1}\cdot \frac{(1 - \sum_{k=1}^{K-1}x_k)^{\alpha_K-1}}{\Gamma(\alpha_K)}\prod_{k=1}^{K-1}\frac{x_k^{\alpha_k -1}}{\Gamma(\alpha_k)}.
   
 \end{equation}
 
@@ -493,10 +493,10 @@ To test the accuracy of this estimator, we find the solution of the integral num
 $f(\theta\mid\mathbf{y}) \propto f(\mathbf{y}\mid\theta)f(\theta),$ with $f(\mathbf{y})^{-1}$ as normalizing constant. We use $f(\mathbf{y})^{-1} = \int_0^1f(\mathbf{y}\mid\theta)f(\theta)$ with the uniform prior of $\theta$ and get 
 
 ```{r}
-multbin = multbinom(10000)
-multbin.tries = multbin[1]
-multbin.sample = multbin[-1]
-multbin.mean.MC <- mean(multbin.sample)
+multbin = multbinom(10000)            #sample from multinomial
+multbin.tries = multbin[1]            #no of attempts
+multbin.sample = multbin[-1]          #samples
+multbin.mean.MC <- mean(multbin.sample)   #Monte Carlo estimator of exepctation 
 
 #Function for integrand to get prior of y
 multbin.prior <- function(x){
@@ -520,11 +520,25 @@ abline(v = multbin.mean.exact$value, col="blue")    #Expectation from numerical 
 
 ## 3.
 
+The theoretical overall acceptance rate in importance sampling is given by $$\mathbf{P}(\text{acceptance}) = \frac{1}{c}.$$
+
 ```{r}
+#Average number of attempts before getting an accepted sample
 tries.per.sample = multbin.tries / length(multbin.sample)
 tries.per.sample
 
+#The theoretical value of the average number of samples needed to get acceptance:
+norm.const <- integrate(multbin.prior,0,1)    #the normalizing constant, f(y)
+lg.norm.const <- log(norm.const$value)        #log-scaling normalizing constant
+xmax = (15 + sqrt(53809)) / 394               #x-val wchich gives maximum f(theta|y)
+lg.overall.acceptance <- lnf(xmax)            #overall acceptance c, f(xmax)
+lgc <- lg.overall.acceptance - lg.norm.const  #normalized c, log-scale
+tries.per.sample.theo <- exp(lgc)             #taking the exponential of the log-scale c
+tries.per.sample.theo
+
 ```
+The actual average number of attempts before accepting a value as a sample conicides with the theoretical overall acceptance rate 1/c, i.e. the theoretical number of attemps before a sample is accepted. 
+
 
 ## 4.
 We want to use a new prior distribution of $\theta$: 
