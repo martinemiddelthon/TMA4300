@@ -486,17 +486,19 @@ dirichlet <- function(alphas){
 }
 
 #Testing
-K = 3
-alphas <- runif(K,0.1,5.0)
-mean.theo <- alphas/sum(alphas)
-dirichlet.samples <- rep(0,K)
-for (i in 1:30){dirichlet.samples = dirichlet.samples + dirichlet(alphas)}
-dirichlet.samples = dirichlet.samples/30
+K = 3                         # setting arbitrary parameter K
+alphas <- c(0.5,1.0,1.5)    # setting arbitrary alpha parameters
+mean.theo <- alphas/sum(alphas)   # theoretical mean 
+dirichlet.samples <- rep(0,K)   # initiate samples 
+for (i in 1:300){dirichlet.samples = dirichlet.samples + dirichlet(alphas)}   # sample from Diriclet 300 times
+mean.diriclet = dirichlet.samples/300   # sample mean
+cat("The theoretical means for the Diriclet distribution with K=3, alpha=(0.5,1.0,1.5) \n")
 mean.theo
-dirichlet.samples
+cat("Sample means for the Diriclet distribution with K=3, alpha=(0.5,1.0,1.5) \n")
+mean.diriclet
 
 ```
-
+The sample means coincide with the theoretical means of the Diriclet distribution. 
 
 # Problem D
 ## 1.
