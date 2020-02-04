@@ -1,5 +1,6 @@
 ---
-title: "Ex1 - TMA4300"
+title: "Exercise 1 - TMA4300"
+author: "Helene Behrens and Martine Middelthon"
 output: html_document
 ---
 
@@ -271,6 +272,7 @@ inv.cdf.sampling = function(n, ln.ab) {
 
 # Function to generate n samples from f
 # alpha > 1
+# Using log-scale to avoid numerical problems
 samples.f = function(n, alpha) {
   vec = rep(0,n)                        # Vector for storing the samples
   i = 1                                 # Count index in vec
@@ -479,7 +481,7 @@ multbinom = function(n) {
 
 ```
 
-##2
+## 2.
 The expected value of $\theta$, conditioned on $\mathbf{y}$ is 
 $$\mathbf{E}[\theta\mid\mathbf{y}] = \int_0^1\theta f(\theta\mid \mathbf{y})\text{d}\theta,$$
 which gives the Monte Carlo estimator for the expectation 
@@ -526,7 +528,7 @@ tries.per.sample
 We want to use a new prior distribution of $\theta$: 
 $$\text{Beta}(\theta;1,5) = 5(1-\theta)^4. $$
  
-We have $N$ samples og $\theta_i \sim f(\theta\mid\mathbf{y})|_{f(\theta) = \text{Beta}(1,1)},$ and we want to find the expectation 
+We have $N$ samples and $\theta_i \sim f(\theta\mid\mathbf{y})|_{f(\theta) = \text{Beta}(1,1)},$ and we want to find the expectation 
 $$\mathbf{E}[\theta\mid\mathbf{y}]|_{f(\theta) = \text{Beta}(1,5)}.$$
 The self-normalizing importance sampling estimator gives us 
 $$\mathbf{E}[\theta\mid\mathbf{y}]|_{f(\theta) = \text{Beta}(1,5)} \approx \hat{\mu}_{IS} =  \frac{\sum_{i=1}^N\theta_i\cdot w(\theta_i)}{\sum_{i=1}^N w(\theta_i)}$$
