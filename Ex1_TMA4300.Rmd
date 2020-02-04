@@ -249,9 +249,9 @@ Since $f^*(x)=0$ for $x\leq0$, we immediately see that $b_- = 0$.
 
 ```{r}
 # Function to generate n samples from ln(unif(0,ab))
-inv.cdf.sampling = function(n, ab) {
+inv.cdf.sampling = function(n, ln.ab) {
   u = runif(n)    # Sample from unif(0,1)
-  x = log(ab*u)   # Using inverse cdf
+  x = ln.ab + log(u)   # Using inverse cdf
   return(x)
 }
 
@@ -260,12 +260,14 @@ inv.cdf.sampling = function(n, ab) {
 samples.f = function(n, alpha) {
   vec = rep(0,n)                        # Vector for storing the samples
   i = 1                                 # Count index in vec
-  a = ((alpha-1)/exp(1))^((alpha-1)/2)  # Value of a
-  b = ((alpha+1)/exp(1))^((alpha+1)/2)  # Value of b_+
+  #a = ((alpha-1)/exp(1))^((alpha-1)/2)  # Value of a
+  #b = ((alpha+1)/exp(1))^((alpha+1)/2)  # Value of b_+
+  lna = (alpha-1) / 2 * (log(alpha-1) -1) # Value of ln(a)
+  lnb = (alpha+1) / 2 * (log(alpha+1) -1) # Value of ln(b_+)
   tries = 0                             # Count number of tries to generate n realizations
   while(i<=n) {
-    z1 = inv.cdf.sampling(1,a)          # Sample from ln(unif(0,a))
-    z2 = inv.cdf.sampling(1,b)          # Sample from ln(unif(b_-,b_+))
+    z1 = inv.cdf.sampling(1,lna)          # Sample from ln(unif(0,a))
+    z2 = inv.cdf.sampling(1,lnb)          # Sample from ln(unif(b_-,b_+))
     diff = z2 - z1
     limit = ((alpha-1)*diff - exp(diff)) / 2  # Calculate upper limit for z1 in C_f
     if(z1 <= limit) {                   # Accept the sample
@@ -294,7 +296,7 @@ print.mean.var(n, mean.emp, mean.theo, var.emp, var.theo) # Printing values
 # Number of tries for different alphas
 #alphas = seq(1.1,2000,length.out = 20)
 n = 1000                                # Number of samples to generate
-alphas = seq(1.1,300,length.out = 20)   # Values for alpha  
+alphas = seq(1.1,2000,length.out = 100)   # Values for alpha  
 tries = rep(0,length(alphas))           # Vector to store number of tries to generate n samples for different alphas
 for(i in 1:length(alphas)) {
   s = samples.f(1000,alphas[i])
