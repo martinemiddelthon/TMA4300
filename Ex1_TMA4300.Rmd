@@ -504,13 +504,7 @@ tries.per.sample
 
 ## 4.
 We want to use a new prior distribution of $\theta$: 
-$$\text{Beta}(\theta;1,5) = 5(1-\theta)^4, $$
-which gives the prosterior distribution of $\theta$ given $\mathbf{y}$
-$$f(\theta\mid\mathbf{y}) \propto f(\mathbf{y}\mid\theta)f(\theta) \propto f(\theta\mid\mathbf{y})|_{f(\theta) = \text{Beta}(1,1)}\cdot\text{Beta}(\theta;1,5).$$
-Then $$\mathbf{E}[\theta\mid\mathbf{y}] = \int_0^1\theta\cdot\text{Beta}(\theta;1,5)\cdot f(\theta\mid\mathbf{y})|_{f(\theta) = \text{Beta}(1,1)}\text{d}\theta,$$
-and we use the Monte Carlo estimator
-$$\hat{\mu}_{f(\theta)=\text{Beta}(1,5)} = \frac{1}{N}\sum_{i=1}^N\theta_i\cdot 5(1-\theta_i)^4,$$
-where the $\theta_i$ are the samples from ## 2. 
+$$\text{Beta}(\theta;1,5) = 5(1-\theta)^4. $$
 
 We have $N$ samples og $\theta_i \sim f(\theta\mid\mathbf{y})|_{f(\theta) = \text{Beta}(1,1)},$ and we want to find the expectation 
 $$\mathbf{E}[\theta\mid\mathbf{y}]|_{f(\theta) = \text{Beta}(1,5)}.$$
