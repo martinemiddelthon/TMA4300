@@ -1,5 +1,5 @@
 ---
-title: "Exercise 1 - TMA4300"
+title: "Exercise 1 - TMA4300 "
 author: "Helene Behrens and Martine Middelthon"
 output:
   pdf_document: default
