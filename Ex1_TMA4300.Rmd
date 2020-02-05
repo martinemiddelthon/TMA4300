@@ -73,8 +73,10 @@ samples_g = function(alpha, n) {
   u = runif(n)                            # Sample from unif(0,1) distribution
   vec = rep(0, n)                         # Vector to store the generated samples
   for(i in 1:length(u)){
-    if(u[i]<= c/alpha) {vec[i] = (alpha * u[i] / c)^(1 / alpha)}  # Use case 1 in inverse cdf to generate sample
-    else {vec[i] = -log(1/alpha + exp(-1) - u[i]/c)}              # Use case 2 in inverse cdf to generate sample
+    # Use case 1 in inverse cdf to generate sample
+    if(u[i]<= c/alpha) {vec[i] = (alpha * u[i] / c)^(1 / alpha)}
+    # Use case 2 in inverse cdf to generate sample
+    else {vec[i] = -log(1/alpha + exp(-1) - u[i]/c)}            
   }
   return(vec)
 }
@@ -278,7 +280,7 @@ samples.f = function(n, alpha) {
   i = 1                                 # Count index in vec
   lna = (alpha-1) / 2 * (log(alpha-1) -1) # Value of ln(a)
   lnb = (alpha+1) / 2 * (log(alpha+1) -1) # Value of ln(b_+)
-  tries = 0                             # Count number of tries to generate n realizations
+  tries = 0                             # Count number of tries
   while(i<=n) {
     z1 = inv.cdf.sampling(1,lna)          # Sample from ln(unif(0,a))
     z2 = inv.cdf.sampling(1,lnb)          # Sample from ln(unif(b_-,b_+))
@@ -312,7 +314,7 @@ print.mean.var(n, mean.emp, mean.theo, var.emp, var.theo) # Printing values
 # Number of tries for different alphas
 n = 1000                                # Number of samples to generate
 alphas = seq(1.1,2000,length.out = 200)   # Values for alpha  
-tries = rep(0,length(alphas))           # Vector to store number of tries to generate n samples for different alphas
+tries = rep(0,length(alphas))           # Vector to store number of tries
 for(i in 1:length(alphas)) {
   s = samples.f(1000,alphas[i])
   tries[i] = s[1]
@@ -329,9 +331,12 @@ From the figure we observe that the number of tries to generate 10000 samples as
 ```{r}
 # Function to generate n samples from gamma distribution
 gamma = function(n, alpha, beta) {
-  if(alpha<1) {return(gamma_rejsamp(n,alpha) / beta)}       # alpha<1, beta is an inverse scale parameter
-  else if(alpha>1) {return(samples.f(n,alpha)[-1] / beta)}  # alpha>1, beta is an inverse scale parameter
-  else {return(samples_exp(beta,n))}                        # alpha=1, exponential distribution with rate beta
+  # alpha<1, beta is an inverse scale parameter
+  if(alpha<1) {return(gamma_rejsamp(n,alpha) / beta)}
+  # alpha>1, beta is an inverse scale parameter
+  else if(alpha>1) {return(samples.f(n,alpha)[-1] / beta)}  
+  # alpha=1, exponential distribution with rate beta
+  else {return(samples_exp(beta,n))}                        
 }
 
 # Test function
