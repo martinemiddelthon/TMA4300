@@ -1,0 +1,42 @@
+---
+title: "Oblig2-TMA4300"
+author: "Martine Middelthon"
+date: "27 2 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Problem B
+
+```{r}
+# Read and plot data
+gaussiandata = read.delim("gaussiandata.txt")
+y = gaussiandata[,1]
+t = seq(from=1,to=length(y),by=1)
+plot(t,y)
+```
+
+## 1.
+We consider the problem of smoothing the time series that is plotted above. We assume that given the vector of linear predictors $\boldsymbol\eta=(\eta_1,\ldots,\eta_T)$, where in this case $T=20$, the observations $y_t$ are independent and distributed according to
+$$
+  y_t \mid \eta_t \sim \mathcal{N}(\eta_t,1)\quad,
+$$
+for $t=1,\ldots,T$.
+The linear predictor for time $t$ is $\eta_t = f_t$, where $f_t$ is the smooth effect for time $t$. For the prior distribution of $\mathbf{f}=(f_1,\ldots,f_T)$ we have a second order random walk model, that is,
+$$
+  \pi(\mathbf{f}\mid\theta) \propto \theta^{(T-2)/2} \text{exp}\Big\{-\frac{\theta}{2} \sum_{t=3}^T (f_t-2f_{t-1}+f_{t-2}^2) \Big\}=\mathcal{N}(\mathbf{0},\mathbf{Q}(\theta)^{-1}) \quad,
+$$
+where $\mathbf{Q}$ is the precision matrix and $\theta$ is the precision parameter that controls the smoothness of $\mathbf{f}$. We assume that the $Gamma(1,1)$-distribution is the prior for $\theta$.
+
+The model described here can be written as the hierarchichal model:
+$$
+  \begin{aligned}
+    \mathbf{y}\mid\mathbf{f} &\sim \prod_{t=1}^T P(y_t\mid \eta_t) \\
+    \mathbf{f}\mid\theta &\sim \pi(\mathbf{f}\mid\theta) = \mathcal{N}(\mathbf{0},\mathbf{Q}(\theta)^{-1}) \\
+    \theta &\sim Gamma(1,1)
+  \end{aligned}
+$$
+Here, the first line is the likelihood of the response $\mathbf{y}=(y_1,\ldots,y_T)$, the second line gives the prior distribution of the latent field, and the third line gives the prior distribution of the hyperparameter $\theta$. Since our model has this particular structure, it is a latent Gaussian model.
