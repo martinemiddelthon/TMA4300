@@ -94,8 +94,33 @@ T = length(y)
 theta.init = 1
 f.init = rep(2,T)
 result = sample.Gibbs(n, theta.init, f.init, y)
-result.theta = result[length(result[,1]), ]
-result.f = result[-length(result[,1]), ]
+result.theta = result[length(result[,1]), -1]
+result.f = result[-length(result[,1]), -1]
+
+hist(result.theta)
+
+
+f.mean = rep(0,T)
+f.var = rep(0,T)
+conf.upper = rep(0,T)
+conf.lower = rep(0,T)
+
+for(t in 1:T) {
+  f.mean[t] = mean(result.f[t,])
+  f.var[t] = var(result.f[t,])
+}
+
+for(t in 1:T) {
+  z = qnorm(0.025)
+  conf.upper[t] = f.mean[t] + z * sqrt(f.var[t]) 
+  conf.lower[t] = f.mean[t] - z * sqrt(f.var[t]) 
+}
+
+t = seq(from = 1, to = T, by = 1)
+plot(t, f.mean, type = "l")
+points(t, y)
+lines(t, conf.lower, col = "red")
+lines(t, conf.upper, col = "red")
 
 
 ```
