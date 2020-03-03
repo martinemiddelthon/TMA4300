@@ -31,12 +31,15 @@ Alg.4 <- function(n,t1.0,l0.0,l1.0,beta.0, obs, sigma){
   for(i in 2:n){
     # sample beta from invGamma
     theta["beta",i] <- rinvgamma(1,shape=4, scale=theta["l0",i-1]+ theta["l1",i-1] + 1)
+    #theta["beta",i] <- rinvgamma(1,shape=4, scale=1/(theta["l0",i-1]+ theta["l1",i-1] + 1))  # DEBUG
     
     # sample l0 from gamma
     theta["l0",i] <- rgamma(1,shape=theta["y0",i-1] + 2, scale=1/(theta["t1",i-1] - t0 + 1/theta["beta",i-1]))
+    #theta["l0",i] <- rgamma(1,shape=theta["y0",i-1] + 2, scale=theta["t1",i-1] - t0 + 1/theta["beta",i-1]) #DEBUG
     
     # sample l1 from gamma
     theta["l1",i] <- rgamma(1,shape = theta["y1",i-1] + 2, scale=1/(t2 - theta["t1",i-1] + 1/theta["beta",i-1]))
+    #theta["l1",i] <- rgamma(1,shape = theta["y1",i-1] + 2, scale=(t2 - theta["t1",i-1] + 1/theta["beta",i-1])) # DEBUG
     
     # MH-step; sample t1 (f.ex. from normal with mean t1)
   
@@ -66,7 +69,7 @@ Alg.4 <- function(n,t1.0,l0.0,l1.0,beta.0, obs, sigma){
   return(theta)
 }
 
-test <- Alg.4(5,1870,5,1,3,coal,15)
+test <- Alg.4(20,1870,5,1,3,coal,15)
 test.df <- as.data.frame(t(test))
 
 theta <- Alg.4(10000,1930,5,1,3,coal,5)
