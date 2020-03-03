@@ -40,3 +40,63 @@ $$
   \end{aligned}
 $$
 Here, the first line is the likelihood of the response $\mathbf{y}=(y_1,\ldots,y_T)$, the second line gives the prior distribution of the latent field, and the third line gives the prior distribution of the hyperparameter $\theta$. Since our model has this particular structure, it is a latent Gaussian model.
+Q is sparse
+theta has small dimension
+every observation/data point depends only on one eta/f
+have latent gaussian model
+
+## 2.
+
+```{r}
+library(Matrix)
+library(mvtnorm)
+
+make.Q = function(T, theta) {
+  #k = c(0, -1, -2)
+  #diags = list(rep(1,T), rep(-2,T-1), rep(1,T-2))
+  #L = bandSparse(T,T,k,diagonals = diags)
+  L = diag(T)
+  d1 = rep(-2,T-1)
+  d2 = rep(1, T-2)
+  L[row(L)-col(L)==1] = d1
+  L[row(L)-col(L)==2] = d2
+  M = L[,-c(T-1,T)]
+  Q = theta * M %*% t(M)
+  return(Q)
+}
+
+sample.Gibbs = function(n, theta.init, f.init, y) {
+  T = length(f.init)
+  theta.vec = rep(0,n)
+  f.matrix = matrix(1:T*n, nrow = T, ncol = n)
+  # Initialize
+  theta.vec[1] = theta.init
+  f.matrix[, 1] = f.init
+  # Iterations
+  for(i in 2:n) {
+    # Theta
+    summ = 0
+    for(t in 3:T) {
+      summ = summ + (f.matrix[t, i-1] - 2*f.matrix[t-1, i-1] + f.matrix[t-2, i-1])^2
+    }
+    theta.vec[i] = rgamma(1, shape = T/2, rate = 1 + 0.5*summ)
+    # f
+    Q = make.Q(T, theta.vec[i])
+    f.mean = solve(Q+diag(T)) %*% y
+    f.sigma = solve(Q+diag(T))
+    f.matrix[, i] = rmvnorm(1, f.mean, f.sigma)
+  }
+  return(rbind(f.matrix, theta.vec))
+}
+
+n = 10000
+T = length(y)
+theta.init = 1
+f.init = rep(2,T)
+result = sample.Gibbs(n, theta.init, f.init, y)
+result.theta = result[length(result[,1]), ]
+result.f = result[-length(result[,1]), ]
+
+
+```
+
