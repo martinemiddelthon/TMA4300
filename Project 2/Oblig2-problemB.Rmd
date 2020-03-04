@@ -125,3 +125,24 @@ lines(t, conf.upper, col = "red")
 
 ```
 
+## 3.
+
+```{r}
+
+pi_theta_y = function(theta.grid, y) {
+  pi = rep(0,length(theta.grid))
+  T = 20
+  for(i in 1:length(pi)){
+    theta = theta.grid[i]
+    Q = make.Q(T, theta)
+    deter = det(solve(Q+diag(T)))
+    pi[i] = theta^(T/2-1) * exp(-theta) * deter^(0.5) * exp(-0.5 * t(y) %*% y)
+  }
+  return(pi)
+}
+
+thetas = seq(from = 0, to = 3, by = 0.1)
+pi = pi_theta_y(thetas, y)
+plot(thetas, pi)
+```
+
