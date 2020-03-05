@@ -6,6 +6,9 @@ library(invgamma)
 
 #install.packages("tidyverse")
 library(tidyverse)
+
+#install.packages("ggpubr")
+library(ggpubr)
   
 data(coal)
 
@@ -52,9 +55,15 @@ Alg.4 <- function(n,t1.0,l0.0,l1.0,beta.0, obs, sigma){
       cat("for lav y1")
       y <- t0
     }
+    y0_prop <- max(which(coal$date <= y)) - 1
+    y1_prop <- length(coal$date) - y0_prop - 2
     u <- runif(1)        
-    lg.alpha <- min(0, (theta["l1",i-1]-theta["l0",i-1])*(y - theta["t1",i-1]))  # log acceptance probability
-    alpha = exp(lg.alpha)                 # acceptance probability
+    #lg.alpha <- min(0, (theta["l1",i-1]-theta["l0",i-1])*(y - theta["t1",i-1]))  # log acceptance probability
+    #alpha = exp(lg.alpha)                 # acceptance probability
+    alpha <- min(1, theta["l0",i-1]^(y0_prop - theta["y0",i-1])
+                 *theta["l1",i-1]^(y1_prop  - theta["y1",i-1])
+                 *exp((theta["l1",i-1]-theta["l0",i-1])*(y - theta["t1",i-1])))  # DEBUG
+        
     if (u < alpha){
       theta["t1",i] <- y
     }
@@ -69,49 +78,60 @@ Alg.4 <- function(n,t1.0,l0.0,l1.0,beta.0, obs, sigma){
   return(theta)
 }
 
-test <- Alg.4(20,1870,5,1,3,coal,15)
+relevant.plots <- function(theta.df,coal,burn.in){
+
+  t1.mean <- mean(theta.df[burn.in:length(theta.df$t1),]$t1)
+  cat("t1.mean", t1.mean)
+  
+  hist <- ggplot(theta.df,aes(x=t1)) + geom_histogram(binwidth = 1)
+  hist <- hist + geom_vline(xintercept = t1.mean, col="red")
+  #hist
+  
+  time.proc <- ggplot(theta.df,aes(x=seq(1,length(t1),1),y=t1)) + geom_line()
+  #time.proc
+  
+  l0.proc <- ggplot(theta.df,aes(x=seq(1,length(t1),1),y=l0)) + geom_line()
+  #l0.proc
+  
+  l1.proc <- ggplot(theta.df,aes(x=seq(1,length(t1),1),y=l1)) + geom_line()
+  #l1.proc
+  
+  beta.proc <- ggplot(theta.df,aes(x=seq(1,length(t1),1),y=beta)) + geom_line()
+  #beta.proc
+  
+  l0.mean <- mean(theta.df[burn.in:length(theta.df$t1),]$l0)
+  cat("l0.mean",l0.mean)
+  
+  l1.mean <- mean(theta.df[burn.in:length(theta.df$t1),]$l1)
+  cat("l1.mean", l1.mean)
+  
+  #values in helplines:
+  x0 <- coal$date[1]
+  yend0 <- l0.mean*(t1.mean - x0)
+  xend1 <- tail(coal$date,1)
+  yend1 <- l1.mean*(xend1 - t1.mean) + yend0
+  
+  
+  compare <- ggplot() + geom_point(data=coal, aes(x=date,y=seq(1,length(date),1)))
+  compare <- compare + geom_segment(aes(x=x0, xend=t1.mean, y = 0, yend = yend0))
+  compare <- compare + geom_segment(aes(x = t1.mean, xend=xend1, y = yend0, yend = yend1))
+  #compare
+  
+  ggarrange(ggarrange(hist,compare,ncol=2, labels=c("hist","compare")),
+            ggarrange(l0.proc,l1.proc,ncol=2, labels=c("l0.porc", "l1.proc")),
+            ggarrange(time.proc,beta.proc,ncol=2, labels=c("time.proc","beta.proc")),nrow=3)
+}
+
+
+
+test <- Alg.4(20000,1930,1,5,0.2,coal,10)
 test.df <- as.data.frame(t(test))
 
 theta <- Alg.4(10000,1930,5,1,3,coal,5)
 theta.df <- as.data.frame(t(theta))
-
-t1.mean <- mean(theta.df[100:length(theta.df$t1),]$t1)
-t1.mean
-
-hist <- ggplot(theta.df,aes(x=t1)) + geom_histogram(binwidth = 1)
-hist <- hist + geom_vline(xintercept = t1.mean, col="red")
-hist
-
-time.proc <- ggplot(theta.df,aes(x=seq(1,length(t1),1),y=t1)) + geom_line()
-time.proc
-
-l0.proc <- ggplot(theta.df,aes(x=seq(1,length(t1),1),y=l0)) + geom_line()
-l0.proc
-
-l1.proc <- ggplot(theta.df,aes(x=seq(1,length(t1),1),y=l1)) + geom_line()
-l1.proc
-
-beta.proc <- ggplot(theta.df,aes(x=seq(1,length(t1),1),y=beta)) + geom_line()
-beta.proc
-
-l0.mean <- mean(theta.df[100:length(theta.df$t1),]$l0)
-l0.mean
-
-l1.mean <- mean(theta.df[100:length(theta.df$t1),]$l1)
-l1.mean
-
-#values in helplines:
-x0 <- coal$date[1]
-yend0 <- l0.mean*(t1.mean - x0)
-xend1 <- tail(coal$date,1)
-yend1 <- l1.mean*(xend1 - t1.mean) + yend0
-
-
-compare <- ggplot() + geom_point(data=coal, aes(x=date,y=seq(1,length(date),1)))
-compare <- compare + geom_segment(aes(x=x0, xend=t1.mean, y = 0, yend = yend0))
-compare <- compare + geom_segment(aes(x = t1.mean, xend=xend1, y = yend0, yend = yend1))
-compare
-    
+   
+relevant.plots(theta.df,coal)
+relevant.plots(test.df,coal,5)
                                   
 
 
