@@ -124,14 +124,14 @@ relevant.plots <- function(theta.df,coal,burn.in){
 
 
 
-test <- Alg.4(20000,1930,1,5,0.2,coal,10)
+test <- Alg.4(200000,1930,2.5,1,0.2,coal,10)
 test.df <- as.data.frame(t(test))
 
 theta <- Alg.4(10000,1930,5,1,3,coal,5)
 theta.df <- as.data.frame(t(theta))
    
 relevant.plots(theta.df,coal)
-relevant.plots(test.df,coal,5)
+relevant.plots(test.df,coal, 25000)
                                   
 
 
