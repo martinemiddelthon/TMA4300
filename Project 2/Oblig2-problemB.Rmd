@@ -116,7 +116,7 @@ sample.Gibbs = function(n, theta.init, f.init, y) {
     }
     theta.vec[i] = rgamma(1, shape = T/2, rate = 1 + 0.5*summ)
     # Sample f
-    Q = make.Q(T, theta.vec[i])
+    Q = make.Q(T, theta.vec[i])         # Use the last updated theta
     f.mean = solve(Q+diag(T)) %*% y
     f.sigma = solve(Q+diag(T))
     f.matrix[, i] = rmvnorm(1, f.mean, f.sigma)
@@ -174,12 +174,12 @@ pi_theta_y = function(theta.grid, y) {
     theta = theta.grid[i]
     Q = make.Q(T, theta)
     deter = det(solve(Q+diag(T)))
-    pi[i] = theta^(T/2-1) * exp(-theta) * deter^(0.5) * exp(-0.5 * t(y) %*% y)
+    pi[i] = theta^(T/2-1) * exp(-theta) * deter^(0.5) * exp(-0.5 * t(y) %*% (diag(T)-solve(Q+diag(T))) %*% y)
   }
   return(pi)
 }
 
-thetas = seq(from = 0, to = 3, by = 0.1)
+thetas = seq(from = 0, to = 9, by = 0.1)
 pi = pi_theta_y(thetas, y)
 plot(thetas, pi)
 ```
@@ -191,11 +191,14 @@ plot(thetas, pi)
 library(INLA)
 T = 20
 t = seq(from = 1, to = T, by = 1)
-data = list(y = y, t = t)
+data = data.frame(y = y, t = t)
 
-thetaprior = list(prior = "gamma", param = c(1, 1))
-formula = y ∼ f(t, model = "rw2", hyper = list(prec = thetaprior), constr = FALSE) - 1
-result = INLA::inla(formula = formula, family = "gaussian", data = data)
+thetahyper = list(theta = list(prior = "log.gamma", param = c(1, 1)))
+formula = y ∼ f(t, model = "rw2", hyper = thetahyper, constr = FALSE) - 1
+result = INLA::inla(formula = formula, family = "gaussian", data = data, control.family = list(hyper=list(prec =list(initial=0,fixed=TRUE))))
 
+plot(result$summary.random$t$mean)
+plot(result$marginals.hyperpar$`Precision for t`, xlim =c(0,9))
+summary(result)
 ```
 
