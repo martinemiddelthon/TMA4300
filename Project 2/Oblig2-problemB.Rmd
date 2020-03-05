@@ -82,6 +82,7 @@ In the algorithm we sample the new proposals for the parameters from these two d
 ```{r}
 library(Matrix)
 library(mvtnorm)
+library(MASS)
 
 # Function to make the precision matrix
 make.Q = function(T, theta) {
@@ -131,11 +132,11 @@ theta.init = 1
 f.init = rep(2,T)
 # Sample
 result = sample.Gibbs(n, theta.init, f.init, y)
-result.theta = result[length(result[,1]), -1]   # Extracting the theta samples, excluding the initial value
-result.f = result[-length(result[,1]), -1]      # Extracting the f samples, excluding the initial values
+result.theta = result[length(result[,1]), -c(1:100)]   # Extracting the theta samples, excluding the first 100 values
+result.f = result[-length(result[,1]), -c(1:100)]      # Extracting the f samples, excluding the first 100 values
 
 # Estimate for the posterior marginal for theta
-hist(result.theta, xlab = "Theta", main = "Histogram of theta samples")
+truehist(result.theta, xlab = "Theta", main = "Histogram of theta samples")
 
 # Vectors for storing the mean, variance and confidence bounds
 f.mean = rep(0,T)
@@ -159,6 +160,9 @@ plot(t, f.mean, type = "l", ylab = "y")
 points(t, y)                      
 lines(t, conf.lower, col = "red")
 lines(t, conf.upper, col = "red")
+# eta_10 histogram
+f_10 = result.f[10,]
+truehist(f_10)
 ```
 The histogram shows an estimate for $\pi(\theta\mid\mathbf{y})$.
 In the plot the data points are plotted as circles. The black line is plotted using the estimates of the smooth effects. The red lines are the $95\%$ confidence bounds. Almost all the data points are within the bounds.
@@ -182,7 +186,48 @@ pi_theta_y = function(theta.grid, y) {
 thetas = seq(from = 0, to = 9, by = 0.1)
 pi = pi_theta_y(thetas, y)
 plot(thetas, pi)
+mode = optimise(pi_theta_y,y=y,lower = 0, upper = 9,maximum = TRUE)$maximum
+mode
 ```
+
+## 4.
+
+```{r}
+set.seed(0)
+pi_etai_y_theta = function(etai.vec, theta, y) {
+  i = 10
+  T = length(y)
+  Q = make.Q(T, theta)
+  A = Q + diag(T)
+  a_ii = A[i,i]
+  mean = y[i] / a_ii
+  var = 1 / a_ii
+  pi = dnorm(etai.vec, mean = mean, sd= sqrt(var))
+  return(pi)
+}
+
+
+pi_etai_y = function(y,theta.grid, eta.grid) {
+  sums = rep(0, length(eta.grid))
+  step = theta.grid[2]-theta.grid[1]
+  theta_y = pi_theta_y(theta.grid, y)
+  for(j in (1:length(theta.grid))) {
+    theta = theta.grid[j]
+    sums = sums + pi_etai_y_theta(eta.grid, theta, y) * theta_y[j] * step
+  }
+  return(sums)
+}
+
+
+thetas = seq(from = 0, to = 9, by = 0.1)
+eta.grid = seq(-1,1,0.01)
+etai_y = pi_etai_y(y,thetas,eta.grid)
+
+plot(eta.grid,etai_y)
+
+```
+
+
 
 
 ## 5.
@@ -195,10 +240,11 @@ data = data.frame(y = y, t = t)
 
 thetahyper = list(theta = list(prior = "log.gamma", param = c(1, 1)))
 formula = y ∼ f(t, model = "rw2", hyper = thetahyper, constr = FALSE) - 1
-result = INLA::inla(formula = formula, family = "gaussian", data = data, control.family = list(hyper=list(prec =list(initial=0,fixed=TRUE))))
+result1 = INLA::inla(formula = formula, family = "gaussian", data = data, control.family = list(hyper=list(prec =list(initial=0,fixed=TRUE))))
 
-plot(result$summary.random$t$mean)
-plot(result$marginals.hyperpar$`Precision for t`, xlim =c(0,9))
-summary(result)
+plot(result1$summary.random$t$mean)
+plot(result1$marginals.hyperpar$`Precision for t`, xlim =c(0,9))
+summary(result1)
+plot(result1$marginals.random$t$index.10,xlim=c(-4,4))
 ```
 
