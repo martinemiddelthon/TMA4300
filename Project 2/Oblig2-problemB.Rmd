@@ -160,14 +160,26 @@ plot(t, f.mean, type = "l", ylab = "y")
 points(t, y)                      
 lines(t, conf.lower, col = "red")
 lines(t, conf.upper, col = "red")
-# eta_10 histogram
+
+# Estimate of pi(eta_10|y)
 f_10 = result.f[10,]
-truehist(f_10)
+truehist(f_10, xlab = bquote(~eta[10]), main = bquote("Histogram of " ~eta[10]~"samples"))
 ```
-The histogram shows an estimate for $\pi(\theta\mid\mathbf{y})$.
+The first histogram shows an estimate for $\pi(\theta\mid\mathbf{y})$.
 In the plot the data points are plotted as circles. The black line is plotted using the estimates of the smooth effects. The red lines are the $95\%$ confidence bounds. Almost all the data points are within the bounds.
+The last histogram of the $eta_{10}$ samples provides an estimate of $\pi(\eta_{10}\mid\mathbf{y})$.
 
 ## 3.
+
+We want to approximate $\pi(\theta\mid\mathbf{y})$ using the INLA scheme. Since we found that $\pi(\boldsymbol\eta\mid\theta,\mathbf{y}) \propto \mathcal{N}((\mathbf{Q}+\mathbf{I})^{-1}\mathbf{y},(\mathbf{Q}+\mathbf{I})^{-1})$, we can calculate
+$$
+  \begin{aligned}
+    \pi(\theta\mid\mathbf{y}) &\propto \frac{\pi(\mathbf{y}\mid\boldsymbol\eta,\theta)\pi(\boldsymbol\eta\mid\theta)\pi(\theta)}{\pi(\boldsymbol\eta\mid\theta,\mathbf{y})} \\
+    &\propto \frac{\exp(-\frac{1}{2}(\mathbf{y}-\boldsymbol\eta)^T(\mathbf{y}-\boldsymbol\eta))\theta^{(T-2)/2}\exp(-\frac{1}{2}\boldsymbol\eta^T\mathbf{Q}\boldsymbol\eta)\exp(-\theta)}{|\mathbf{Q}+\mathbf{I}|^{1/2}\exp(-\frac{1}{2}(\boldsymbol\eta-(\mathbf{Q}+\mathbf{I})^{-1}\mathbf{y})^T(\mathbf{Q}+\mathbf{I})(\boldsymbol\eta-(\mathbf{Q}+\mathbf{I})^{-1}\mathbf{y}))} \\
+    &= \theta^{(T-2)/2}|\mathbf{Q}+\mathbf{I}|^{-1/2}\exp\bigg(-\theta-\frac{1}{2}\mathbf{y}^T\big(\mathbf{I}-(\mathbf{Q}+\mathbf{I})^{-1}\big)\mathbf{y}\bigg)
+  \end{aligned}\quad,
+$$
+where $|\cdot|$ denotes the determinant and we have used that $|\mathbf{A}^{-1}|=\frac{1}{|A|}$. We use a grid of values for $\theta$ and calculate the posterior marginal. The plot below shows the result, and it seems to be in concordance with the MCMC estimate displayed by the histogram.
 
 ```{r}
 
@@ -185,9 +197,8 @@ pi_theta_y = function(theta.grid, y) {
 
 thetas = seq(from = 0, to = 9, by = 0.1)
 pi = pi_theta_y(thetas, y)
-plot(thetas, pi)
-mode = optimise(pi_theta_y,y=y,lower = 0, upper = 9,maximum = TRUE)$maximum
-mode
+plot(thetas, pi, xlab = bquote(theta), ylab = bquote(pi))
+#mode = optimise(pi_theta_y,y=y,lower = 0, upper = 9,maximum = TRUE)$maximum
 ```
 
 ## 4.
