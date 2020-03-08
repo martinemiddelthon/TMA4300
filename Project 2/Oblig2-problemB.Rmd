@@ -98,6 +98,7 @@ make.Q = function(T, theta) {
   return(Q)
 }
 
+set.seed(0)
 # Function for block Gibbs sampling
 # n is the number of samples including the inital value
 sample.Gibbs = function(n, theta.init, f.init, y) {
@@ -179,13 +180,13 @@ $$
     &= \theta^{(T-2)/2}|\mathbf{Q}+\mathbf{I}|^{-1/2}\exp\bigg(-\theta-\frac{1}{2}\mathbf{y}^T\big(\mathbf{I}-(\mathbf{Q}+\mathbf{I})^{-1}\big)\mathbf{y}\bigg)
   \end{aligned}\quad,
 $$
-where $|\cdot|$ denotes the determinant and we have used that $|\mathbf{A}^{-1}|=\frac{1}{|A|}$. We use a grid of values for $\theta$ and calculate the posterior marginal. The plot below shows the result, and it seems to be in concordance with the MCMC estimate displayed by the histogram.
+where $|\cdot|$ denotes the determinant and we have used that $|\mathbf{A}^{-1}|=\frac{1}{|A|}$. We use a grid $\boldsymbol\theta_{\text{grid}}$ of values for $\theta$ and calculate the posterior marginal. The plot below shows the result, and it seems to be in concordance with the MCMC estimate displayed by the histogram.
 
 ```{r}
-
+# Function to calculate pi(theta|y) for each theta in the grid
 pi_theta_y = function(theta.grid, y) {
   pi = rep(0,length(theta.grid))
-  T = 20
+  T = length(y)
   for(i in 1:length(pi)){
     theta = theta.grid[i]
     Q = make.Q(T, theta)
@@ -195,17 +196,30 @@ pi_theta_y = function(theta.grid, y) {
   return(pi)
 }
 
-thetas = seq(from = 0, to = 9, by = 0.1)
-pi = pi_theta_y(thetas, y)
-plot(thetas, pi, xlab = bquote(theta), ylab = bquote(pi))
+
+thetas = seq(from = 0, to = 9, by = 0.1)    # Theta grid
+pi = pi_theta_y(thetas, y)                  # Corresponding values for pi(theta|y)
+plot(thetas, pi, xlab = bquote(theta), ylab = bquote(pi))   # Plotting
+
 #mode = optimise(pi_theta_y,y=y,lower = 0, upper = 9,maximum = TRUE)$maximum
 ```
 
 ## 4.
 
+We also want to implement the INLA scheme for the approximation of $\pi(\eta_i\mid\mathbf{y})$. We have 
+$$
+  \begin{aligned}
+    \pi(\eta_i\mid\mathbf{y}) &= \int \pi(\eta_i\mid\mathbf{y},\theta)\pi(\theta\mid\mathbf{y})d\theta \\
+    &\approx \sum_{\theta_k\in\boldsymbol\theta_{\text{grid}}} \pi(\eta_i\mid\mathbf{y},\theta_k)\pi(\theta_k\mid\mathbf{y}) \Delta
+  \end{aligned} \quad,
+$$
+where $\boldsymbol\theta_{\text{grid}}$ is the grid of theta values from point 3, and $\Delta$ is the step size between the values in the grid. 
+Since $\pi(\boldsymbol\eta\mid\theta,\mathbf{y}) \propto \mathcal{N}((\mathbf{Q}+\mathbf{I})^{-1}\mathbf{y},(\mathbf{Q}+\mathbf{I})^{-1})$, we assume that $\pi(\eta_i\mid\mathbf{y},\theta)\sim \mathcal{N}(\frac{\mathbf{y}_i}{a_{ii}},\frac{1}{a_{ii}})$, where $\mathbf{A}=\mathbf{Q}+\mathbf{I}$ and $a_{ii}=\mathbf{A}_{ii}$.
+We calculate $\pi(\eta_i\mid\mathbf{y})$ for $i=10$ and values for $\eta_{10}\in[-1,1]$. The plot below shows the result. The graph looks approximately normal with a small and negative mean, which also the estimation obtained using the block Gibbs sampling(displayed by the last histogram in point 2) does. However, the curve in this approximation is narrower than the one outlined by the histogram of the MCMC estimate.
+
 ```{r}
-set.seed(0)
-pi_etai_y_theta = function(etai.vec, theta, y) {
+# Function for calculating pi(eta_10|y,theta_k) for each eta_10 in the grid
+pi_etai_y_theta = function(etai.grid, theta, y) {
   i = 10
   T = length(y)
   Q = make.Q(T, theta)
@@ -213,32 +227,30 @@ pi_etai_y_theta = function(etai.vec, theta, y) {
   a_ii = A[i,i]
   mean = y[i] / a_ii
   var = 1 / a_ii
-  pi = dnorm(etai.vec, mean = mean, sd= sqrt(var))
-  return(pi)
+  pi = dnorm(etai.grid, mean = mean, sd= sqrt(var))
+  return(pi)    # Return the vector corresponding to each eta_10 in the grid
 }
 
-
+# Function for calculating pi(eta_10|y) for each eta_10 in the grid
 pi_etai_y = function(y,theta.grid, eta.grid) {
-  sums = rep(0, length(eta.grid))
-  step = theta.grid[2]-theta.grid[1]
-  theta_y = pi_theta_y(theta.grid, y)
-  for(j in (1:length(theta.grid))) {
-    theta = theta.grid[j]
-    sums = sums + pi_etai_y_theta(eta.grid, theta, y) * theta_y[j] * step
+  sums = rep(0, length(eta.grid))   # Vector for storing the approximations
+  step = theta.grid[2]-theta.grid[1]  # Step size
+  theta_y = pi_theta_y(theta.grid, y) # vector of pi(theta|y) for each theta in the grid
+  for(k in (1:length(theta.grid))) {
+    theta = theta.grid[k]             # theta_k
+    sums = sums + pi_etai_y_theta(eta.grid, theta, y) * theta_y[k] * step # Adding the terms for theta_k
   }
   return(sums)
 }
 
 
-thetas = seq(from = 0, to = 9, by = 0.1)
-eta.grid = seq(-1,1,0.01)
-etai_y = pi_etai_y(y,thetas,eta.grid)
+thetas = seq(from = 0, to = 9, by = 0.1)    # Theta grid
+eta.grid = seq(-1,1,0.01)                   # Eta grid
+etai_y = pi_etai_y(y,thetas,eta.grid)       # Vector of pi(eta_10|y) for each eta_10 in the grid
 
-plot(eta.grid,etai_y)
+plot(eta.grid,etai_y, ylab = bquote(pi), xlab = bquote(eta[10]))    # Plotting the result
 
 ```
-
-
 
 
 ## 5.
@@ -255,7 +267,7 @@ result1 = INLA::inla(formula = formula, family = "gaussian", data = data, contro
 
 plot(result1$summary.random$t$mean)
 plot(result1$marginals.hyperpar$`Precision for t`, xlim =c(0,9))
-summary(result1)
+#summary(result1)
 plot(result1$marginals.random$t$index.10,xlim=c(-4,4))
 ```
 
