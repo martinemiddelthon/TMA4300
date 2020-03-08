@@ -255,6 +255,10 @@ plot(eta.grid,etai_y, ylab = bquote(pi), xlab = bquote(eta[10]))    # Plotting t
 
 ## 5.
 
+We now use built in inla function for the same estimates as above. In the first figure the estimated smooth effects using inla are plotted as a red line. The MCMC estimates are also plotted in the same figure as a black line. The estimates are very similar, so the lines are overlapping.
+The second figure shows the estimate of $\pi(\theta\mid\mathbf{y})$, which looks very similar to the ones from point 2 and 3.
+The last figure shows the estimate for $\pi(\eta_{10}\mid\mathbf{y})$. This looks like the estimate from point 2, using MCMC. The curve is narrower than the one from point 4, where we used an approximation to the integral. This might be the reason for the difference.
+
 ```{r}
 library(INLA)
 T = 20
@@ -265,9 +269,10 @@ thetahyper = list(theta = list(prior = "log.gamma", param = c(1, 1)))
 formula = y ∼ f(t, model = "rw2", hyper = thetahyper, constr = FALSE) - 1
 result1 = INLA::inla(formula = formula, family = "gaussian", data = data, control.family = list(hyper=list(prec =list(initial=0,fixed=TRUE))))
 
-plot(result1$summary.random$t$mean)
-plot(result1$marginals.hyperpar$`Precision for t`, xlim =c(0,9))
+plot(result1$summary.random$t$mean, xlab="t", ylab="y", type="l", col="red")
+lines(t, f.mean)
+plot(result1$marginals.hyperpar$`Precision for t`, xlim =c(0,9), xlab=bquote(theta),ylab=bquote(pi))
 #summary(result1)
-plot(result1$marginals.random$t$index.10,xlim=c(-4,4))
+plot(result1$marginals.random$t$index.10,xlim=c(-4,4),xlab=bquote(eta[10]),ylab=bquote(pi))
 ```
 
