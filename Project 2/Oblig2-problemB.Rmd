@@ -200,8 +200,6 @@ pi_theta_y = function(theta.grid, y) {
 thetas = seq(from = 0, to = 9, by = 0.1)    # Theta grid
 pi = pi_theta_y(thetas, y)                  # Corresponding values for pi(theta|y)
 plot(thetas, pi, xlab = bquote(theta), ylab = bquote(pi))   # Plotting
-
-#mode = optimise(pi_theta_y,y=y,lower = 0, upper = 9,maximum = TRUE)$maximum
 ```
 
 ## 4.
@@ -214,8 +212,8 @@ $$
   \end{aligned} \quad,
 $$
 where $\boldsymbol\theta_{\text{grid}}$ is the grid of theta values from point 3, and $\Delta$ is the step size between the values in the grid. 
-Since $\pi(\boldsymbol\eta\mid\theta,\mathbf{y}) \propto \mathcal{N}((\mathbf{Q}+\mathbf{I})^{-1}\mathbf{y},(\mathbf{Q}+\mathbf{I})^{-1})$, we assume that $\pi(\eta_i\mid\mathbf{y},\theta)\sim \mathcal{N}(\frac{\mathbf{y}_i}{a_{ii}},\frac{1}{a_{ii}})$, where $\mathbf{A}=\mathbf{Q}+\mathbf{I}$ and $a_{ii}=\mathbf{A}_{ii}$.
-We calculate $\pi(\eta_i\mid\mathbf{y})$ for $i=10$ and values for $\eta_{10}\in[-1,1]$. The plot below shows the result. The graph looks approximately normal with a small and negative mean, which also the estimation obtained using the block Gibbs sampling(displayed by the last histogram in point 2) does. However, the curve in this approximation is narrower than the one outlined by the histogram of the MCMC estimate.
+Since $\pi(\boldsymbol\eta\mid\theta,\mathbf{y}) \propto \mathcal{N}((\mathbf{Q}+\mathbf{I})^{-1}\mathbf{y},(\mathbf{Q}+\mathbf{I})^{-1})$, we assume that $\pi(\eta_i\mid\mathbf{y},\theta)\sim \mathcal{N}([\mathbf{A}\mathbf{y}]_i,\mathbf{A}_{ii})$, where $\mathbf{A}=(\mathbf{Q}+\mathbf{I})^{-1}$.
+We calculate $\pi(\eta_i\mid\mathbf{y})$ for $i=10$ and values for $\eta_{10}\in[-2,2]$. The plot below shows the result. The graph looks approximately normal with a small and negative mean, which also the estimation obtained using the block Gibbs sampling (displayed by the last histogram in point 2) does.
 
 ```{r}
 # Function for calculating pi(eta_10|y,theta_k) for each eta_10 in the grid
@@ -223,10 +221,9 @@ pi_etai_y_theta = function(etai.grid, theta, y) {
   i = 10
   T = length(y)
   Q = make.Q(T, theta)
-  A = Q + diag(T)
-  a_ii = A[i,i]
-  mean = y[i] / a_ii
-  var = 1 / a_ii
+  A = solve(Q + diag(T))
+  mean = (A %*% y)[i]
+  var = A[i,i]
   pi = dnorm(etai.grid, mean = mean, sd= sqrt(var))
   return(pi)    # Return the vector corresponding to each eta_10 in the grid
 }
@@ -245,7 +242,7 @@ pi_etai_y = function(y,theta.grid, eta.grid) {
 
 
 thetas = seq(from = 0, to = 9, by = 0.1)    # Theta grid
-eta.grid = seq(-1,1,0.01)                   # Eta grid
+eta.grid = seq(-2,2,0.01)                   # Eta grid
 etai_y = pi_etai_y(y,thetas,eta.grid)       # Vector of pi(eta_10|y) for each eta_10 in the grid
 
 plot(eta.grid,etai_y, ylab = bquote(pi), xlab = bquote(eta[10]))    # Plotting the result
@@ -257,7 +254,7 @@ plot(eta.grid,etai_y, ylab = bquote(pi), xlab = bquote(eta[10]))    # Plotting t
 
 We now use built in inla function for the same estimates as above. In the first figure the estimated smooth effects using inla are plotted as a red line. The MCMC estimates are also plotted in the same figure as a black line. The estimates are very similar, so the lines are overlapping.
 The second figure shows the estimate of $\pi(\theta\mid\mathbf{y})$, which looks very similar to the ones from point 2 and 3.
-The last figure shows the estimate for $\pi(\eta_{10}\mid\mathbf{y})$. This looks like the estimate from point 2, using MCMC. The curve is narrower than the one from point 4, where we used an approximation to the integral. This might be the reason for the difference.
+The last figure shows the estimate for $\pi(\eta_{10}\mid\mathbf{y})$, and it looks like the estimates from point 2 and 4.
 
 ```{r}
 library(INLA)
@@ -272,7 +269,6 @@ result1 = INLA::inla(formula = formula, family = "gaussian", data = data, contro
 plot(result1$summary.random$t$mean, xlab="t", ylab="y", type="l", col="red")
 lines(t, f.mean)
 plot(result1$marginals.hyperpar$`Precision for t`, xlim =c(0,9), xlab=bquote(theta),ylab=bquote(pi))
-#summary(result1)
 plot(result1$marginals.random$t$index.10,xlim=c(-4,4),xlab=bquote(eta[10]),ylab=bquote(pi))
 ```
 
