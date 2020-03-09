@@ -39,19 +39,13 @@ block.1 <- function(theta,i,sigma,t0,t2){
   
   # find alpha
   g.fact <- sum(log(1:y0.n + 1)) + sum(log(1:y1.n + 1)) - sum(log(1:y0+1)) - sum(log(1:y1+1))
-  cat("g.fact: ",g.fact)
-  cat(" exp(g.fact): ", exp(g.fact))
   
   t.fact <- (y0 + 2)*log(t1 - t0 + 1/beta) + 
     (y1 + 2)*log(t2 - t1 + 1/beta) - 
     (y0.n + 2)*log(t1.n - t0 + 1/beta) - 
     (y1.n + 2)*log(t2 - t1.n + 1/beta)
   
-  cat(" t.fact: ",t.fact)
-  cat(" exp(t.fact): ", exp(t.fact), " ")
-  #alpha <- ((t1 - t0 + 1/beta)^(y0 + 2)*(t2 - t1 + 1/beta)^(y1 + 2))/((t1.n - t0 + 1/beta)^(y0.n + 2)*(t2 - t1.n + 1/beta)^(y1.n + 2))*exp(g.fact)
   alpha <- exp(t.fact + g.fact)
-  cat(" alpha: ",alpha)
   alpha <- min(1,alpha)
 
   
@@ -115,7 +109,6 @@ block.2 <- function(theta,i,sigma, t0, t2){
     (y1 + 2)*log(t2 - t1 + 1/beta.n)
   alpha <- exp(alpha.lg)
   alpha <- min(1, alpha)
-  cat(alpha)
   
   #accept or reject
   u <- runif(1)
@@ -154,7 +147,7 @@ MH <- function(n,t1.0,l0.0,l1.0,beta.0, obs, sigma1, sigma2){
   theta["beta",1] <- beta.0
   
   for(i in 2:n){
-    cat("i", i)
+    # alternating block updates
     if(i%%2 == 0){
       # block 1 update
       theta <- block.1(theta, i, sigma1, t0, t2)
@@ -168,7 +161,10 @@ MH <- function(n,t1.0,l0.0,l1.0,beta.0, obs, sigma1, sigma2){
 }
 
 
-test <- MH(n=100, t1.0=1900,l0.0 = 3,l1.0 = 1,beta.0  = 1, obs = coal, sigma1 = 10, sigma2 = 1)
+test <- MH(n=100000, t1.0=1900,l0.0 = 3,l1.0 = 1,beta.0  = 1, obs = coal, sigma1 = 10, sigma2 = 1)
 test.df <- as.data.frame(t(test))
 
-relevant.plots(test.df,coal,10)
+acceptance <- mean(test.df$accept)
+acceptance
+
+relevant.plots(test.df,coal,10000)

@@ -11,15 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ##1)
 
-We consider the built-in coal-mining data set in $\texttt{R}$ and we adopt a hierarchical Bayesian model to analyse the data set. We assume that the coal-mining disasters follow an inhomogeneous Ppisson process with intensity function $\lambda(t).$ Furthermore, we assume that $\lambda(t)$ is piecewise constant with $n$ break points, where $t_0$ and $t_{n+1}$ are the start- and end-times of the dataset, respectively, and $t_k;\;k=1,\ldots,n$ are break-points in the intensity function:
-$$
-\lambda = \begin{cases}
-&\lambda_{k-1} \: \text{for} \: t\in[t_{k-1},t_k), \; k=1,\ldots,n \\
-&\lambda_n\:\text{for}\:[t_n,t_{n-1}].
-\end{cases}
-$$
-Our model parameters are then $(\beta, t_1,\ldots,t_n, \lambda_0, \ldots, \lambda_n)$.
-
+We consider the built-in coal-mining data set in $\texttt{R}$ and we adopt a hierarchical Bayesian model to analyse the data set. Below, we see a visualization of the data:
 
 
 ```{r}
@@ -37,11 +29,96 @@ visualize <- ggplot() + geom_point(data=coal, aes(x=date,y=seq(1,length(date),1)
 visualize
 ```
 
-## 2)
+We assume that the coal-mining disasters follow an inhomogeneous Poisson process with intensity function $\lambda(t).$ Furthermore, we assume that $\lambda(t)$ is piecewise constant with $n$ break points, where $t_0$ and $t_{n+1}$ are the start- and end-times of the dataset, respectively, and $t_k;\;k=1,\ldots,n$ are break-points in the intensity function:
+$$
+\lambda = \begin{cases}
+&\lambda_{k-1} \: \text{for} \: t\in[t_{k-1},t_k), \; k=1,\ldots,n \\
+&\lambda_n\:\text{for}\:[t_n,t_{n-1}].
+\end{cases}
+$$
+Our model parameters are then $(\beta, t_1,\ldots,t_n, \lambda_0, \ldots, \lambda_n)$. The likelihood function of the data can be derived to be 
+$$
+f(x\mid t_1,\ldots,t_n,\lambda_1,\ldots,\lambda_n) = \exp(-\int_{t_0}^{t_{n+1}}\lambda(t)\text{d}t)\prod_{k=0}^n\lambda_k^{y_k} = \exp(-\sum_ {k=0}^{n}\lambda_{k}(t_{k+1}-t_k))\prod_{k=0}^n\lambda_k^{y_k},
+$$
+where $x$ is the observed data AND $y_k$ is the number of observed disasters in the corresponding interval. We assume that the $t_i$ are apriori uniformly distributed on the allowed values, and that the $\lambda_i$ are apriori independent of the $t_i$ and of each other. Apriori, we assume all $\lambda_i$ to be distributed from the same gamma distribution with shape parameter $\alpha=2$ and scale parameter $\beta$;
+$$
+f(\lambda_i\mid\beta) = \frac{1}{\beta^2}\lambda_ie^{-\frac{\lambda_i}{\beta}}, \quad \lambda_i\geq0.
+$$
+For $\beta$ we use the improper prior
+$$
+f(\beta) \propto \frac{\exp(-1/\beta)}{\beta} \quad \text{for} \: \beta>0.
+$$
+From now on, we assume $n=1$, and the model parameters are then $\theta = (t_1, \lambda_0, \lambda_1, \beta)$. 
+
+## 2
+
+We wish to find an expression for the posterior distribution for $\theta$ given $x$, $f(\theta\mid x)$. 
+$$f(\theta\mid x) = f(x \mid \theta)f(\theta)f(x)^{-1}$$
+$$f(\theta \mid x) \propto f(x \mid \theta)f(\theta)$$
+$$\quad \propto f(x \mid \theta)f(t_1)f(\lambda_0, \lambda_1, \beta)$$
+$$\quad \propto f(x\mid \theta)f(t_1)f(\lambda_0,\lambda_1\mid \beta)f(\beta)$$
+$$\quad \propto f(x\mid \theta)f(t_1)f(\lambda_0\mid \beta)f(\lambda_1\mid\beta)f(\beta).$$
+For $n=2$ we have that
+$$
+f(t_1) = \begin{cases} &\frac{1}{t_2 - t_1} \quad t_1\in[t_0, t_2]\\
+& 0 \quad \text{otherwise}\end{cases}
+$$ and
+$$
+f(x \mid \theta) = \exp(-\lambda_0(t_1 - t_0) - \lambda_1(t_2-t_1))\lambda_0^{y_0}\lambda_1^{y_1}.
+$$
+Inserting for the remaining distributions, we get 
+$$
+f(\theta \mid x) \propto \frac{1}{\beta^5}\lambda_0^{y_0 + 1}\lambda_1^{y_1+1}\exp(-\lambda_0(t_1 - t_1 + 1/\beta))\exp(-\lambda_1(t_2 - t_1 + 1/\beta)).
+$$
 
 ## 3)
+We find the full conditionals for each of the elements in $\theta$. In general, to find the full conditional of an element $\theta_i$ given $x$ and the remaining parameters $\theta^{-i}$ we have
+$$
+f(\theta_i\mid x,\theta^{-i}) = \frac{f(\theta,x)}{f(x,\theta^{-i})} = \frac{f(\theta,x)}{\int f(\theta,x) \text{d}\theta_i}
+$$
+$$
+=\frac{f(\theta \mid x)f(x)}{\int f(x)f(\theta\mid x)\text{d}\theta_i} = \frac{f(\theta \mid x)}{\int f(\theta \mid x) \text{d}\theta_i}.
+$$
+For $\lambda_0$ we get:
+$$
+f(\lambda_0 \mid x, \beta, \lambda_1,t_1) = \frac{\lambda_0^{y_0+1}\exp(-\lambda_0()t_1 - t_0 + 1/\beta)}{\int_{0}^{\infty}\lambda_0^{y_0+1}\exp(-\lambda_0()t_1 - t_0 + 1/\beta)\text{d}\lambda_0}
+$$
+$$
+=\frac{\lambda_0^{y_0+1}(t_1 - t_0 + 1/\beta)^{y_0 + 2}}{\Gamma(y_0 + 2)}\cdot e^{-\lambda_0(t_1 - t_0 + 1/\beta)} \sim \text{Gamma}(y_0 + 2,1/(t_1 - t_0 + 1/\beta)).
+$$
+Similarily, we get for $\lambda_1$:
+$$
+f(\lambda_1 \mid x, \beta, \lambda_0,t_1)=\frac{\lambda_1^{y_1+1}(t_2 - t_1 + 1/\beta)^{y_1 + 2}}{\Gamma(y_1 + 2)}\cdot e^{-\lambda_01t_2 - t_1 + 1/\beta)} \sim \text{Gamma}(y_1 + 2,1/(t_2 - t_1 + 1/\beta)).
+$$
+For $\beta$ we get:
+$$
+f(\beta \mid x, \lambda_0, \lambda_1, t_1)  =\frac{1/\beta^5\cdot e^{-(\lambda_0 + \lambda_1 + 1)/\beta}}{\int_{0}^{\infty}1/\beta^5\cdot e^{-(\lambda_0 + \lambda_1  + 1)/\beta}\text{d}\beta}
+$$
+$$
+=\frac{(\lambda_0 + \lambda_1 + 1)^4\cdot e^{-(\lambda_0 + \lambda_1 + 1)/\beta}}{6\beta^5} \sim \text{invGamma}(4, 1/(\lambda_0 + \lambda_1 + 1)).
+$$
+Finally, we have for $t_1$:
+$$
+f(t_1 \mid x, \lambda_0, \lambda_1, \beta) = \frac{\lambda_0^{y_0 + 1}\lambda_1^{y_1+1}e^{t_1(\lambda_1 - \lambda_0)}}{\int \lambda_0^{y_0 + 1}\lambda_1^{y_1+1}e^{t_1(\lambda_1 - \lambda_0)}\text{d}t_1} 
+$$
+$$
+\propto \lambda_0^{y_0 + 1}\lambda_1^{y_1 + 1}e^{t_1(\lambda_1 - \lambda_0)}.
+$$
+We recall that $y_0$ and $y_1$ are dependent on $t_1$, and so this does not follow an exponential distribution. 
 
 ## 4)
+A single-site MCMC algoritm is implemented below. We have used Gibbs sampling for $\beta$, $\lambda_0$ and $\lambda_$, meaning that we have used their conditional distributions as proposal distributions. This gives us an acceptance probability of exactly one for all samples of $\beta$, $\lambda_0$ and $\lambda_$. As we do not know how to sample directly from the full conditional of $t_1$, we choose a random-walk approach for this. For each iteration we sample the proposed $t_1^i$ from a normal distribution with mean $t_1^i$ and variance $\sigma^$. As the normal distribution is symmetric, we get that the proposal ratio is one:
+$$
+\frac{Q(t^{i-1}\mid t')}{Q(t' \mid t^{i-1})} = \frac{\exp(-\frac{1}{2}(\frac{t^{i-1} - t'}{\sigma})^2)}{\exp(-\frac{1}{2}(\frac{t' - t^{i-1}}{\sigma})^2)} = \exp(0) = 1.
+$$
+Thus, the acceptance ratio is 
+$$
+\alpha = \text{min}(1, \frac{\pi(t',\ldots)}{\pi(t^{i-1},\ldots)}) = \text{min}\bigg(1, \frac{\lambda_0^{y_0'+1}\cdot \lambda_1^{y_1' + 1}\cdot e^{t'(\lambda_1 - \lambda_0)}}{\lambda_0^{y_0^{i-1}+1}\cdot \lambda_1^{y_1^{i-1} + 1}\cdot e^{t^{i-1}(\lambda_1 - \lambda_0)}}\bigg)
+$$
+$$
+=\text{min}\bigg( 1, \lambda_0^{y_0' - y_0^{i-1}}\lambda_1^{y_1' - y_1^{i-1}}e^{(\lambda_1 - \lambda_0)(t' - t^{i-1})}  \bigg),
+$$
+where $y_0^{i-1}, y_1^{i-1}$ and $t^{i-1}$ are the values of $y_0, y_1$ and $t_1$ from the last iteration, respectively. 
 
 ```{r}
 Alg.4 <- function(n,t1.0,l0.0,l1.0,beta.0, obs, sigma){
@@ -182,6 +259,7 @@ sig.plot.60 <- ggplot(th60.df,aes(x=seq(1,length(t1),1),y=t1)) + geom_line()
 sig.plot.60
 
 ```
+## 5 AND 6
 Above, we ran the algorithm for $\sigma = 1,5,10,20$ for an initial $t_1 = 1940,$ which is quite far from the correct value. We observe that the burn-in period, i.e. how many iterations the alogrithm use to reach the correct domain, is significantly higher for lower values of $\sigma$. We set the burn-in periods to $[15000,5000,1000,1000]$ respectively, and look at the fit of the resulting values:
 
 ```{r}
@@ -214,17 +292,202 @@ cf.20 <- compare.fit(th20.df,1000)
 ggarrange(ggarrange(cf.1,cf.5,ncol=2),ggarrange(cf.10,cf.20,ncol=2),nrow = 2)
 
 ```
-We observe that when we take the burn-in into consideration, the algoritm seems to produce a good fit with all values of $\sigma.$
-
-## A6) 
+We observe that when we take the burn-in into consideration, the algoritm seems to produce a good fit with all values of $\sigma.$ To evaluate the mixing properties of the algortim, we look at how well the algoritm explores the range of possible values for the parameters. TODO: PLOTT DETTE! KOM MED KONKLUSJON. 
 
 Skriv inn!!! 
 
-## A7)
+## 7
 
 We now implement the MCMC using block proposals for: 
+* $(t_1, \lambda_0, \lambda_1)$ keeping $\beta$ constant
+* $(\beta, \lambda_0, \lambda_1)$ keeping $t_1$ constant.
+We alternate between these two block updates for every iteration, and we a an implementation of the algorithm below. 
+
+In the first block, we sample $\tilde{t_1}$ from a normal distribution, as in section 4), and $\lambda_0$ and $\lambda_1$ are sampled from their full conditionals conditioned on the proposed $\tilde{t}_t$. This gives us the following acceptance probability:
+$$
+\alpha = \text{min}(1, \frac{\pi(\tilde{t}_1, \tilde{\lambda}_0, \tilde{\lambda}_1\mid \beta)}{\pi(t_1, \lambda_0, \lambda_1 \mid \beta)}\times\frac{Q(t_1, \lambda_0, \lambda_1 \mid \tilde{t}_1, \tilde{\lambda}_0, \tilde{\lambda}_1, \beta)}{Q(\tilde{t}_1, \tilde{\lambda}_0, \tilde{\lambda}_1 \mid t_1, \lambda_0, \lambda_1, \beta)}).
+$$
 
 
+```{r}
+block.1 <- function(theta,i,sigma,t0,t2){
+  # block 1 update
+  th <- theta
+  
+  #help vars:
+  t1 <- th["t1",i-1]
+  y1 <- th["y1",i-1]
+  y0 <- th["y0",i-1]
+  beta <- th["beta",i-1]
+  
+  # keep beta constant
+  th["beta",i] <- th["beta",i-1]
+  
+  # sample new t1 from normal distribution
+  t1.n <- rnorm(1,t1,sigma)
+  if(t1.n > t2 | t1.n < t0){
+    t1.n <- t1
+  }
+  
+  #find corresponding y0.n and y1.n
+  y0.n <- max(which(coal$date <= t1.n)) - 1
+  y1.n <- length(coal$date) - y0.n - 2
+  
+  # sample lambda0 from Gamma distirbution with new t1
+  l0.n <- rgamma(1,shape = y0.n + 2, scale = 1/(t1.n - t0 + 1/beta))
+  
+  # sample lambda1 from Gamma distribution with new t1
+  l1.n <- rgamma(1,shape = y1.n + 2, scale = 1/(t2 - t1.n + 1/beta))
+  
+  # find alpha
+  g.fact <- sum(log(1:y0.n + 1)) + sum(log(1:y1.n + 1)) - sum(log(1:y0+1)) - sum(log(1:y1+1))
+  
+  t.fact <- (y0 + 2)*log(t1 - t0 + 1/beta) + 
+    (y1 + 2)*log(t2 - t1 + 1/beta) - 
+    (y0.n + 2)*log(t1.n - t0 + 1/beta) - 
+    (y1.n + 2)*log(t2 - t1.n + 1/beta)
+  
+  alpha <- exp(t.fact + g.fact)
+  alpha <- min(1,alpha)
+
+  
+  # accept or reject
+  u <- runif(1)
+  if(u < alpha){
+    # accept
+    th["t1",i] <- t1.n
+    th["l0",i] <- l0.n
+    th["l1",i] <- l1.n
+    th["y0",i] <- y0.n
+    th["y1",i] <- y1.n
+    th["accept",i] <- 1
+  }
+  else{
+    # reject
+    th["t1",i] <- th["t1",i-1]
+    th["l0",i] <- th["l0",i-1]
+    th["l1",i] <- th["l1",i-1]
+    th["y0",i] <- th["y0",i-1]
+    th["y1",i] <- th["y1",i-1]
+    th["accept",i] <- 0
+  }
+  return(th)
+}
+
+block.2 <- function(theta,i,sigma, t0, t2){
+  # block 2 update
+  th <- theta
+  
+  #help vars:
+  t1 <- th["t1",i-1]
+  y1 <- th["y1",i-1]
+  y0 <- th["y0",i-1]
+  beta <- th["beta",i-1]
+  
+  # keep t1 constant
+  th["t1",i] <- th["t1",i-1]
+  th["y0",i] <- th["y0",i-1]
+  th["y1",i] <- th["y1",i-1]
+  
+  # sample beta from normal distribution
+  beta.n <- rnorm(1,beta,sigma)
+  if(beta.n <= 0){
+    beta.n <- beta  # if beta out of bounds, reject 
+  }
+  
+  # sample l0 from Gamma distribution with new beta
+  l0.n <- rgamma(1,shape = y0 + 2, scale = 1/(t1 - t0 + 1/beta.n))
+  
+  # sample l1 from Gamma distribution with new beta
+  l1.n <- rgamma(1,shape = y1 + 2, scale = 1/(t2 - t1 + 1/beta.n))
+  
+  # find alpha
+  #alpha <- (beta^5*(t1 - t0 + 1/beta)^(y0 + 2)*(t2 - t1 + 1/beta)^(y1 + 2))/(beta.n^5^(t1 - t0 + 1/beta.n)^(y0 + 2)*(t2 - t1 + 1/beta.n)^(y1 + 2))
+  
+  alpha.lg <- 5*log(beta) - 5*log(beta.n) + 
+    (y0 + 2)*log(t1 - t0 + 1/beta) + 
+    (y1 + 2)*log(t2 - t1 + 1/beta) - 
+    (y0 + 2)*log(t1 - t0 + 1/beta.n) - 
+    (y1 + 2)*log(t2 - t1 + 1/beta.n)
+  alpha <- exp(alpha.lg)
+  alpha <- min(1, alpha)
+  
+  #accept or reject
+  u <- runif(1)
+  if(u < alpha){
+    # accept
+    th["beta",i] <- beta.n
+    th["l0",i] <- l0.n
+    th["l1",i] <- l1.n
+    th["accept",i] <- 1
+  }
+  else{
+    # reject
+    th["beta",i] <- th["beta",i-1]
+    th["l0",i] <- th["l0",i-1]
+    th["l1",i] <- th["l1",i-1]
+    th["accept",i] <- 0
+  }
+  return(th)
+}
+
+MH <- function(n,t1.0,l0.0,l1.0,beta.0, obs, sigma1, sigma2){
+  # initializing parameters with prior estimates
+  
+  theta <- matrix(0L, nrow=7, ncol=n)
+  rownames(theta) <- c("t1", "l0", "l1", "beta", "y0", "y1", "accept")
+  
+  t0 <- coal$date[1]
+  t2 <- tail(coal$date,1)
+  
+  theta["t1",1] <- t1.0
+  theta["y0",1] <- max(which(coal$date < theta["t1",1])) - 1 # disasters before t1, subtracting the first element which is not a disaster
+  theta["y1",1] <- length(coal$date) - theta["y0",1] - 2 # disasters at and after t1, subtracting start time and end time element
+  
+  theta["l0",1] <- l0.0
+  theta["l1",1] <- l1.0
+  theta["beta",1] <- beta.0
+  
+  for(i in 2:n){
+    # alternating block updates
+    if(i%%2 == 0){
+      # block 1 update
+      theta <- block.1(theta, i, sigma1, t0, t2)
+    }
+    else{
+      # block 2 update
+      theta <- block.2(theta, i, sigma2, t0, t2)
+    }
+  }
+  return(theta)
+}
+```
+In the second block, we update $\beta$ by sampling from a normal distibution with mean $\beta_{i-1}$ and variance $\sigma_2².$ We show the results for $\sigma_2²=[0.1,1,10]$ while keeping the variance in the sampling of $t_1$, $\sigma_1²=10,$ as we found this to be a good value in section A4). 
+
+```{r}
+# var2 = 0.1
+blc.01 <- MH(n=10000, t1.0=1900,l0.0 = 3,l1.0 = 1,beta.0  = 1, obs = coal, sigma1 = 10, sigma2 = 0.1)
+blc.01.df <- as.data.frame(t(blc.01))
+
+# var2 = 1
+blc.1 <- MH(n=10000, t1.0=1900,l0.0 = 3,l1.0 = 1,beta.0  = 1, obs = coal, sigma1 = 10, sigma2 = 1)
+blc.1.df <- as.data.frame(t(blc.1))
+
+# var2  =10
+blc.10 <- MH(n=10000, t1.0=1900,l0.0 = 3,l1.0 = 1,beta.0  = 1, obs = coal, sigma1 = 10, sigma2 = 10)
+blc.10.df <- as.data.frame(t(blc.10))
+
+acc.01 <- mean(blc.01.df$accept); cat("acceptante 0.1: ", acc.01, "\n")
+acc.1 <- mean(blc.1.df$accept); cat("acceptance rate 1: ", acc.1, "\n")
+acc.10 <- mean(blc.10.df$accept); cat("acceptance rate 10: ", acc.10, "\n")
+
+# plotting results for the different sigmas:
+relevant.plots(blc.01.df,coal,1000)
+relevant.plots(blc.1.df,coal,1000)
+relevant.plots(blc.10.df,coal,1000)
+
+```
+We observe that while all values of $\sigma_2²$ seem to produce reasonable results, $\sigma_2² = 0.1$ makes the algoritm explore the $\beta$ values more slowly, which again leads to slower convergence. For $\sigma_2² = 0.1,$ the acceptance rate is also slightly higher than optimal, we usually want an acceptance rate between 20$\%$ and 50$\%$ for random-walk proposals. 
 
 
 
