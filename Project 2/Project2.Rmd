@@ -150,3 +150,85 @@ relevant.plots <- function(theta.df,coal,burn.in){
 }
 
 ```
+
+We plot the result for some different initial values and values of tuning parameters to evaluate the performance of the algorithm. First, we compare the results for different values of $\sigma$:
+
+```{r}
+th1 <- Alg.4(40000,1940,2.5,1,0.2,coal,1)
+th1.df <- as.data.frame(t(th1))
+th5 <- Alg.4(40000,1940,2.5,1,0.2,coal,5)
+th5.df <- as.data.frame(t(th5))
+th10 <- Alg.4(40000,1940,2.5,1,0.2,coal,10)
+th10.df <- as.data.frame(t(th10))
+th20 <- Alg.4(40000,1940,2.5,1,0.2,coal,20)
+th20.df <- as.data.frame(t(th20))
+
+sig.plot.1 <- ggplot(th1.df,aes(x=seq(1,length(t1),1),y=t1)) + geom_line()
+sig.plot.1
+sig.plot.5 <- ggplot(th5.df,aes(x=seq(1,length(t1),1),y=t1)) + geom_line()
+sig.plot.5
+sig.plot.10 <- ggplot(th10.df,aes(x=seq(1,length(t1),1),y=t1)) + geom_line()
+sig.plot.10
+sig.plot.20 <- ggplot(th20.df,aes(x=seq(1,length(t1),1),y=t1)) + geom_line()
+sig.plot.20
+
+ggarrange(ggarrange(sig.plot.1,sig.plot.5,ncol=2,labels=c("sigma = 1","sigma = 5")),
+          ggarrange(sig.plot.10,sig.plot.20,ncol=2,labels=c("sigma = 10", "sigma = 20")),
+          nrow = 2)
+
+th60 <- Alg.4(50000,1940,2.5,1,0.2,coal,60)
+th60.df <- as.data.frame(t(th60))
+sig.plot.60 <- ggplot(th60.df,aes(x=seq(1,length(t1),1),y=t1)) + geom_line()
+sig.plot.60
+
+```
+Above, we ran the algorithm for $\sigma = 1,5,10,20$ for an initial $t_1 = 1940,$ which is quite far from the correct value. We observe that the burn-in period, i.e. how many iterations the alogrithm use to reach the correct domain, is significantly higher for lower values of $\sigma$. We set the burn-in periods to $[15000,5000,1000,1000]$ respectively, and look at the fit of the resulting values:
+
+```{r}
+compare.fit <- function(df,burnin){
+  t1.mean <- mean(df[burnin:length(df$t1),]$t1)
+  cat("t1.mean", t1.mean)
+  
+  l0.mean <- mean(df[burnin:length(df$t1),]$l0)
+  cat("l0.mean",l0.mean)
+  
+  l1.mean <- mean(df[burnin:length(df$t1),]$l1)
+  cat("l1.mean", l1.mean)
+  
+  #values in helplines:
+  x0 <- coal$date[1]
+  yend0 <- l0.mean*(t1.mean - x0)
+  xend1 <- tail(coal$date,1)
+  yend1 <- l1.mean*(xend1 - t1.mean) + yend0
+  
+  compare <- ggplot() + geom_point(data=coal, aes(x=date,y=seq(1,length(date),1)))
+  compare <- compare + geom_segment(aes(x=x0, xend=t1.mean, y = 0, yend = yend0))
+  compare <- compare + geom_segment(aes(x = t1.mean, xend=xend1, y = yend0, yend = yend1))
+  compare
+}
+cf.1 <- compare.fit(th1.df,15000)
+cf.5 <- compare.fit(th5.df,5000)
+cf.10 <- compare.fit(th10.df,1000)
+cf.20 <- compare.fit(th20.df,1000)
+
+ggarrange(ggarrange(cf.1,cf.5,ncol=2),ggarrange(cf.10,cf.20,ncol=2),nrow = 2)
+
+```
+We observe that when we take the burn-in into consideration, the algoritm seems to produce a good fit with all values of $\sigma.$
+
+## A6) 
+
+Skriv inn!!! 
+
+## A7)
+
+We now implement the MCMC using block proposals for: 
+
+
+
+
+
+
+
+
+
