@@ -12,7 +12,7 @@ library(ggpubr)
   
 data(coal)
 
-set.seed(124)
+#set.seed(124)
 
 Alg.4 <- function(n,t1.0,l0.0,l1.0,beta.0, obs, sigma){
   # initializing parameters with prior estimates
@@ -126,7 +126,7 @@ relevant.plots <- function(theta.df,coal,burn.in){
 
 
 
-test <- Alg.4(100000,1890,2.5,1,0.2,coal,10)
+test <- Alg.4(100000,1890,2.5,1,0.2,coal,20)
 test.df <- as.data.frame(t(test))
 
 theta <- Alg.4(10000,1930,5,1,3,coal,5)
@@ -134,6 +134,29 @@ theta.df <- as.data.frame(t(theta))
    
 relevant.plots(theta.df,coal)
 relevant.plots(test.df,coal, 7400)
+
+# plot of sigma:
+th1 <- Alg.4(100000,1890,2.5,1,0.2,coal,1)
+th1.df <- as.data.frame(t(th1))
+th5 <- Alg.4(100000,1890,2.5,1,0.2,coal,5)
+th5.df <- as.data.frame(t(th5))
+th10 <- Alg.4(100000,1890,2.5,1,0.2,coal,10)
+th10.df <- as.data.frame(t(th10))
+th20 <- Alg.4(100000,1890,2.5,1,0.2,coal,20)
+th20.df <- as.data.frame(t(th20))
+
+sig.plot.1 <- ggplot(th1.df,aes(x=seq(1,length(t1),1),y=t1)) + geom_line()
+sig.plot.1
+sig.plot.5 <- ggplot(th5.df,aes(x=seq(1,length(t1),1),y=t1)) + geom_line()
+sig.plot.5
+sig.plot.10 <- ggplot(th10.df,aes(x=seq(1,length(t1),1),y=t1)) + geom_line()
+sig.plot.10
+sig.plot.20 <- ggplot(th20.df,aes(x=seq(1,length(t1),1),y=t1)) + geom_line()
+sig.plot.20
+
+ggarrange(ggarrange(sig.plot.1,sig.plot.5,ncol=2,labels=c("sigma = 1","sigma = 5")),
+          ggarrange(sig.plot.10,sig.plot.20,ncol=2,labels=c("sigma = 10", "sigma = 20")),
+          nrow = 2)
 
 
 
