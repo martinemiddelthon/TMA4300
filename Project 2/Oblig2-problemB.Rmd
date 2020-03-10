@@ -2,7 +2,9 @@
 title: "Oblig2-TMA4300"
 author: "Martine Middelthon"
 date: "27 2 2020"
-output: html_document
+output: 
+  pdf_document: 
+    latex_engine: xelatex
 ---
 
 ```{r setup, include=FALSE}
