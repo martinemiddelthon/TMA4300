@@ -303,11 +303,26 @@ We now implement the MCMC using block proposals for:
 * $(\beta, \lambda_0, \lambda_1)$ keeping $t_1$ constant.
 We alternate between these two block updates for every iteration, and we a an implementation of the algorithm below. 
 
-In the first block, we sample $\tilde{t_1}$ from a normal distribution, as in section 4), and $\lambda_0$ and $\lambda_1$ are sampled from their full conditionals conditioned on the proposed $\tilde{t}_t$. This gives us the following acceptance probability:
+In the first block, we sample $\tilde{t_1}$ from a normal distribution, as in section 4), and $\lambda_0$ and $\lambda_1$ are sampled from their full conditionals conditioned on the proposed $\tilde{t}_t$ BEGRUNNELSE JOINT = MARGINAL. This gives us the following acceptance probability:
 $$
 \alpha = \text{min}(1, \frac{\pi(\tilde{t}_1, \tilde{\lambda}_0, \tilde{\lambda}_1\mid \beta)}{\pi(t_1, \lambda_0, \lambda_1 \mid \beta)}\times\frac{Q(t_1, \lambda_0, \lambda_1 \mid \tilde{t}_1, \tilde{\lambda}_0, \tilde{\lambda}_1, \beta)}{Q(\tilde{t}_1, \tilde{\lambda}_0, \tilde{\lambda}_1 \mid t_1, \lambda_0, \lambda_1, \beta)}).
 $$
-
+We look more closely at these expressions:
+$$
+Q(\tilde{t_1},\tilde{\lambda_0}, \tilde{\lambda_1}\mid t_1, \lambda_0, \lambda_1, \beta) = Q(\tilde{\lambda_0},\tilde{\lambda_1}\mid \tilde{t_1}, \beta)Q(\tilde{t_1}\mid t_1, \beta)
+$$
+$$
+= f(\tilde{\lambda_0}\mid x, \tilde{t_1}, \beta)f(\tilde{\lambda_1}\mid x, \tilde{t_1}, \beta)\mathrm{N}(t_1, \sigma)
+$$
+$$
+=\frac{\tilde{\lambda_0}^{\tilde{y_0}+1}(\tilde{t_1} - t_0 + \frac{1}{\beta})^{\tilde{y_0}+2}e^{-\tilde{\lambda_0}(\tilde{t_1}-t_0 + \frac{1}{\beta})}}{\Gamma(\tilde{y_0} + 2)}\frac{\tilde{\lambda_1}^{\tilde{y_1}+1}(t_1 - \tilde{t_1} + \frac{1}{\beta})^{\tilde{y_1}+2}e^{-\tilde{\lambda_1}(t_2 - \tilde{t_1} + \frac{1}{\beta})}}{\Gamma(\tilde{y_1}+2)}\cdot\mathrm{N}(t_1, \sigma)
+$$
+$$
+\pi(\tilde{t_1},\tilde{\lambda_0},\tilde{\lambda_1}\mid \beta) \propto \pi(\tilde{t_1},\tilde{\lambda_0},\tilde{\lambda_1},\beta)
+$$
+$$
+\propto \tilde{\lambda}_0^{\tilde{y}_0+1}\cdot \tilde{\lambda}_1^{\tilde{y}_1+1}e^{-\tilde{\lambda}_0(\tilde{t}_1-t_0 + \frac{1}{\beta})}e^{-\tilde{\lambda}_1(t_2 - \tilde{t}_1 + \frac{1}{\beta})}
+$$
 
 ```{r}
 block.1 <- function(theta,i,sigma,t0,t2){
