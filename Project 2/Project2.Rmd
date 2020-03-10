@@ -1,6 +1,8 @@
 ---
-title: "Project2"
-output: html_document
+title: "Project2 - Part A"
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -9,12 +11,15 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Problem A
 
+We consider the built-in coal-mining data set in $\texttt{R}$.
+
 ##1)
 
-We consider the built-in coal-mining data set in $\texttt{R}$ and we adopt a hierarchical Bayesian model to analyse the data set. Below, we see a visualization of the data:
+We adopt a hierarchical Bayesian model to analyse the data set. Below, we see a visualization of the data:
 
 
-```{r}
+```{r, include=FALSE}
+set.seed(124)
 library(boot)
 library(ggplot2)
 #install.packages("invgamma")
@@ -23,7 +28,9 @@ library(invgamma)
 library(tidyverse)
 #install.packages("ggpubr")
 library(ggpubr)
-
+```
+```{r}
+set.seed(124)
 data(coal)
 visualize <- ggplot() + geom_point(data=coal, aes(x=date,y=seq(1,length(date),1)))
 visualize
@@ -40,7 +47,7 @@ Our model parameters are then $(\beta, t_1,\ldots,t_n, \lambda_0, \ldots, \lambd
 $$
 f(x\mid t_1,\ldots,t_n,\lambda_1,\ldots,\lambda_n) = \exp(-\int_{t_0}^{t_{n+1}}\lambda(t)\text{d}t)\prod_{k=0}^n\lambda_k^{y_k} = \exp(-\sum_ {k=0}^{n}\lambda_{k}(t_{k+1}-t_k))\prod_{k=0}^n\lambda_k^{y_k},
 $$
-where $x$ is the observed data AND $y_k$ is the number of observed disasters in the corresponding interval. We assume that the $t_i$ are apriori uniformly distributed on the allowed values, and that the $\lambda_i$ are apriori independent of the $t_i$ and of each other. Apriori, we assume all $\lambda_i$ to be distributed from the same gamma distribution with shape parameter $\alpha=2$ and scale parameter $\beta$;
+where $x$ is the observed data and $y_k$ is the number of observed disasters in the corresponding interval. We assume that the $t_i$ are apriori uniformly distributed on the allowed values, and that the $\lambda_i$ are apriori independent of the $t_i$ and of each other. Apriori, we assume all $\lambda_i$ to be distributed from the same gamma distribution with shape parameter $\alpha=2$ and scale parameter $\beta$;
 $$
 f(\lambda_i\mid\beta) = \frac{1}{\beta^2}\lambda_ie^{-\frac{\lambda_i}{\beta}}, \quad \lambda_i\geq0.
 $$
@@ -107,7 +114,7 @@ $$
 We recall that $y_0$ and $y_1$ are dependent on $t_1$, and so this does not follow an exponential distribution. 
 
 ## 4)
-A single-site MCMC algoritm is implemented below. We have used Gibbs sampling for $\beta$, $\lambda_0$ and $\lambda_$, meaning that we have used their conditional distributions as proposal distributions. This gives us an acceptance probability of exactly one for all samples of $\beta$, $\lambda_0$ and $\lambda_$. As we do not know how to sample directly from the full conditional of $t_1$, we choose a random-walk approach for this. For each iteration we sample the proposed $t_1^i$ from a normal distribution with mean $t_1^i$ and variance $\sigma^$. As the normal distribution is symmetric, we get that the proposal ratio is one:
+A single-site MCMC algoritm is implemented below. We have used Gibbs sampling for $\beta$, $\lambda_0$ and $\lambda_1$, meaning that we have used their conditional distributions as proposal distributions. This gives us an acceptance probability of exactly one for all samples of $\beta$, $\lambda_0$ and $\lambda_1$. As we do not know how to sample directly from the full conditional of $t_1$, we choose a random-walk approach for this. For each iteration we sample the proposed $t_1^i$ from a normal distribution with mean $t_1^i$ and variance $\sigma^2$. As the normal distribution is symmetric, we get that the proposal ratio is one:
 $$
 \frac{Q(t^{i-1}\mid t')}{Q(t' \mid t^{i-1})} = \frac{\exp(-\frac{1}{2}(\frac{t^{i-1} - t'}{\sigma})^2)}{\exp(-\frac{1}{2}(\frac{t' - t^{i-1}}{\sigma})^2)} = \exp(0) = 1.
 $$
@@ -124,15 +131,17 @@ where $y_0^{i-1}, y_1^{i-1}$ and $t^{i-1}$ are the values of $y_0, y_1$ and $t_1
 Alg.4 <- function(n,t1.0,l0.0,l1.0,beta.0, obs, sigma){
   # initializing parameters with prior estimates
   
-  theta <- matrix(0L, nrow=6, ncol=n)
-  rownames(theta) <- c("t1", "l0", "l1", "beta", "y0", "y1")
+  theta <- matrix(0L, nrow=7, ncol=n)
+  rownames(theta) <- c("t1", "l0", "l1", "beta", "y0", "y1","accept")
   
   t0 <- coal$date[1]
   t2 <- tail(coal$date,1)
   
   theta["t1",1] <- t1.0
-  theta["y0",1] <- max(which(coal$date < theta["t1",1])) - 1 # disasters before t1, subtracting the first element which is not a disaster
-  theta["y1",1] <- length(coal$date) - theta["y0",1] - 2 # disasters at and after t1, subtracting start time and end time element
+  # disasters before t1, subtracting the first element which is not a disaster
+  theta["y0",1] <- max(which(coal$date < theta["t1",1])) - 1 
+  # disasters at and after t1, subtracting start time and end time element
+  theta["y1",1] <- length(coal$date) - theta["y0",1] - 2 
   
   theta["l0",1] <- l0.0
   theta["l1",1] <- l1.0
@@ -140,15 +149,15 @@ Alg.4 <- function(n,t1.0,l0.0,l1.0,beta.0, obs, sigma){
   
   for(i in 2:n){
     
-    # MH-step; sample t1 (f.ex. from normal with mean t1)
-  
+    # MH-step; sample t1 from normal with mean t1
     y <- rnorm(1,theta["t1",i-1],sigma)                # proposal for t1
     if (y > t2 | y < t0){
-      #cat("y utenfor")
-      theta["t1",i] <- theta["t1",i-1] # etterpå: prøv evt å ha dette først
+      # reject
+      theta["t1",i] <- theta["t1",i-1] 
       theta["beta",i] <- theta["beta",i-1]
       theta["l0",i] <- theta["l0",i-1]
       theta["l1",i] <- theta["l1",i-1]
+      theta["accept",i] <- 0
     }
     else {
       y0_prop <- max(which(coal$date <= y)) - 1
@@ -157,21 +166,28 @@ Alg.4 <- function(n,t1.0,l0.0,l1.0,beta.0, obs, sigma){
       # acceptance probability:
       alpha <- min(1, theta["l0",i-1]^(y0_prop - theta["y0",i-1])
                    *theta["l1",i-1]^(y1_prop  - theta["y1",i-1])
-                   *exp((theta["l1",i-1]-theta["l0",i-1])*(y - theta["t1",i-1])))  # DEBUG
+                   *exp((theta["l1",i-1]-theta["l0",i-1])*(y - theta["t1",i-1])))
           
       if (u < alpha){
+        # accept
         theta["t1",i] <- y
+        theta["accept", i] <- 1
       }
       else{
+        # reject
         theta["t1",i] <- theta["t1",i-1]
+        theta["accept", i] <- 0
       }
       # sample beta from inverse gamma distribution
-      theta["beta",i] <- rinvgamma(1,shape=4, scale=1/(theta["l0",i-1]+ theta["l1",i-1] + 1))
+      theta["beta",i] <- rinvgamma(1,shape=4,
+                                   scale=1/(theta["l0",i-1]+ theta["l1",i-1] + 1))
       
       # sample l0 from gamma
-      theta["l0",i] <- rgamma(1,shape=theta["y0",i-1] + 2, scale=1/(theta["t1",i-1] - t0 + 1/theta["beta",i-1]))
+      theta["l0",i] <- rgamma(1,shape=theta["y0",i-1] + 2,
+                              scale=1/(theta["t1",i-1] - t0 + 1/theta["beta",i-1]))
       # sample l1 from gamma
-      theta["l1",i] <- rgamma(1,shape = theta["y1",i-1] + 2, scale=1/(t2 - theta["t1",i-1] + 1/theta["beta",i-1]))
+      theta["l1",i] <- rgamma(1,shape = theta["y1",i-1] + 2,
+                              scale=1/(t2 - theta["t1",i-1] + 1/theta["beta",i-1]))
       
     }
     # update y0 based on current t1 and obs
@@ -185,29 +201,26 @@ Alg.4 <- function(n,t1.0,l0.0,l1.0,beta.0, obs, sigma){
 relevant.plots <- function(theta.df,coal,burn.in){
 
   t1.mean <- mean(theta.df[burn.in:length(theta.df$t1),]$t1)
-  cat("t1.mean", t1.mean)
   
   hist <- ggplot(theta.df,aes(x=t1)) + geom_histogram(binwidth = 1)
-  hist <- hist + geom_vline(xintercept = t1.mean, col="red")
-  #hist
+  hist <- hist + geom_vline(xintercept = t1.mean, col="red") + 
+    labs(x="t1",y="occurrances")
   
-  time.proc <- ggplot(theta.df,aes(x=seq(1,length(t1),1),y=t1)) + geom_line()
-  #time.proc
+  time.proc <- ggplot(theta.df,aes(x=seq(1,length(t1),1),y=t1)) +
+    geom_line() + labs(x="iterations",y="t1")
   
-  l0.proc <- ggplot(theta.df,aes(x=seq(1,length(t1),1),y=l0)) + geom_line()
-  #l0.proc
+  l0.proc <- ggplot(theta.df,aes(x=seq(1,length(t1),1),y=l0)) + 
+    geom_line() + labs(x="iterations",y="lambda0")
   
-  l1.proc <- ggplot(theta.df,aes(x=seq(1,length(t1),1),y=l1)) + geom_line()
-  #l1.proc
+  l1.proc <- ggplot(theta.df,aes(x=seq(1,length(t1),1),y=l1)) +
+    geom_line() + labs(x="iterations",y="lambda 1")
   
-  beta.proc <- ggplot(theta.df,aes(x=seq(1,length(t1),1),y=beta)) + geom_line()
-  #beta.proc
+  beta.proc <- ggplot(theta.df,aes(x=seq(1,length(t1),1),y=beta)) +
+    geom_line() + labs(x="iterations", y="beta")
   
   l0.mean <- mean(theta.df[burn.in:length(theta.df$t1),]$l0)
-  cat("l0.mean",l0.mean)
   
   l1.mean <- mean(theta.df[burn.in:length(theta.df$t1),]$l1)
-  cat("l1.mean", l1.mean)
   
   #values in helplines:
   x0 <- coal$date[1]
@@ -215,15 +228,16 @@ relevant.plots <- function(theta.df,coal,burn.in){
   xend1 <- tail(coal$date,1)
   yend1 <- l1.mean*(xend1 - t1.mean) + yend0
   
-  
   compare <- ggplot() + geom_point(data=coal, aes(x=date,y=seq(1,length(date),1)))
   compare <- compare + geom_segment(aes(x=x0, xend=t1.mean, y = 0, yend = yend0))
-  compare <- compare + geom_segment(aes(x = t1.mean, xend=xend1, y = yend0, yend = yend1))
-  #compare
+  compare <- compare + geom_segment(aes(x = t1.mean, xend=xend1, y = yend0, yend = yend1)) + 
+    labs(x="time",y="disasters")
   
-  ggarrange(ggarrange(hist,compare,ncol=2, labels=c("hist","compare")),
-            ggarrange(l0.proc,l1.proc,ncol=2, labels=c("l0.porc", "l1.proc")),
-            ggarrange(time.proc,beta.proc,ncol=2, labels=c("time.proc","beta.proc")),nrow=3)
+  g.arr <- ggarrange(ggarrange(hist,compare,ncol=2),
+            ggarrange(l0.proc,l1.proc,ncol=2),
+            ggarrange(time.proc,beta.proc,ncol=2),
+            nrow=3)
+  return(g.arr)
 }
 
 ```
@@ -240,38 +254,43 @@ th10.df <- as.data.frame(t(th10))
 th20 <- Alg.4(40000,1940,2.5,1,0.2,coal,20)
 th20.df <- as.data.frame(t(th20))
 
-sig.plot.1 <- ggplot(th1.df,aes(x=seq(1,length(t1),1),y=t1)) + geom_line()
-sig.plot.1
-sig.plot.5 <- ggplot(th5.df,aes(x=seq(1,length(t1),1),y=t1)) + geom_line()
-sig.plot.5
-sig.plot.10 <- ggplot(th10.df,aes(x=seq(1,length(t1),1),y=t1)) + geom_line()
-sig.plot.10
-sig.plot.20 <- ggplot(th20.df,aes(x=seq(1,length(t1),1),y=t1)) + geom_line()
-sig.plot.20
+# acceptance probabilities:
+accept.1 <- mean(th1.df$accept)
+cat("Acceptance propability with sigma = 1: ",accept.1,"\n")
+accept.5 <- mean(th5.df$accept)
+cat("Acceptance propability with sigma = 5: ",accept.5,"\n")
+accept.10 <- mean(th10.df$accept)
+cat("Acceptance propability with sigma = 10: ",accept.10,"\n")
+accept.20 <- mean(th20.df$accept)
+cat("Acceptance propability with sigma = 20: ",accept.20,"\n")
+
+
+sig.plot.1 <- ggplot(th1.df,aes(x=seq(1,length(t1),1),y=t1)) + geom_line() + 
+  labs(y="t1",x="iterations")
+sig.plot.5 <- ggplot(th5.df,aes(x=seq(1,length(t1),1),y=t1)) + geom_line() + 
+  labs(y="t1",x="iterations")
+sig.plot.10 <- ggplot(th10.df,aes(x=seq(1,length(t1),1),y=t1)) + geom_line() + 
+  labs(y="t1",x="iterations")
+sig.plot.20 <- ggplot(th20.df,aes(x=seq(1,length(t1),1),y=t1)) + geom_line() + 
+  labs(y="t1",x="iterations")
 
 ggarrange(ggarrange(sig.plot.1,sig.plot.5,ncol=2,labels=c("sigma = 1","sigma = 5")),
           ggarrange(sig.plot.10,sig.plot.20,ncol=2,labels=c("sigma = 10", "sigma = 20")),
           nrow = 2)
 
-th60 <- Alg.4(50000,1940,2.5,1,0.2,coal,60)
-th60.df <- as.data.frame(t(th60))
-sig.plot.60 <- ggplot(th60.df,aes(x=seq(1,length(t1),1),y=t1)) + geom_line()
-sig.plot.60
-
 ```
 ## 5 AND 6
-Above, we ran the algorithm for $\sigma = 1,5,10,20$ for an initial $t_1 = 1940,$ which is quite far from the correct value. We observe that the burn-in period, i.e. how many iterations the alogrithm use to reach the correct domain, is significantly higher for lower values of $\sigma$. We set the burn-in periods to $[15000,5000,1000,1000]$ respectively, and look at the fit of the resulting values:
+Above, we ran the algorithm for $\sigma = 1,5,10,20$ for an initial $t_1 = 1940,$ which is quite far from the correct value. We set the intial value so far off to more clearly see the relation between the burn-in time and the value of $\sigma$. We observe that the burn-in period, i.e. how many iterations the alogrithm use to reach the correct domain, is significantly higher for lower values of $\sigma$. From the results so far, it seems like a $\sigma$ somewhere between 5 and 10 is ideal, as $\sigma = 5$ had an acceptance probability in the desired domain (between 20$\%$ and 50$\%$ for random-walk proposals), while $\sigma = 10$ had a lower acceptance probability, but a shorter burn-in period. 
+
+We set the burn-in periods to $[35000,7000,1000,1000]$ respectively, and look at the fit of the resulting values:
 
 ```{r}
 compare.fit <- function(df,burnin){
   t1.mean <- mean(df[burnin:length(df$t1),]$t1)
-  cat("t1.mean", t1.mean)
   
   l0.mean <- mean(df[burnin:length(df$t1),]$l0)
-  cat("l0.mean",l0.mean)
   
   l1.mean <- mean(df[burnin:length(df$t1),]$l1)
-  cat("l1.mean", l1.mean)
   
   #values in helplines:
   x0 <- coal$date[1]
@@ -284,7 +303,7 @@ compare.fit <- function(df,burnin){
   compare <- compare + geom_segment(aes(x = t1.mean, xend=xend1, y = yend0, yend = yend1))
   compare
 }
-cf.1 <- compare.fit(th1.df,15000)
+cf.1 <- compare.fit(th1.df,35000)
 cf.5 <- compare.fit(th5.df,5000)
 cf.10 <- compare.fit(th10.df,1000)
 cf.20 <- compare.fit(th20.df,1000)
@@ -292,18 +311,72 @@ cf.20 <- compare.fit(th20.df,1000)
 ggarrange(ggarrange(cf.1,cf.5,ncol=2),ggarrange(cf.10,cf.20,ncol=2),nrow = 2)
 
 ```
-We observe that when we take the burn-in into consideration, the algoritm seems to produce a good fit with all values of $\sigma.$ To evaluate the mixing properties of the algortim, we look at how well the algoritm explores the range of possible values for the parameters. TODO: PLOTT DETTE! KOM MED KONKLUSJON. 
+We observe that when we take the burn-in into consideration, the algoritm seems to produce a good fit with all values of $\sigma$,and we see that the value of $\sigma$ does then not influence the limiting distribution. To evaluate the mixing properties of the algortim, we look at how well the algoritm explores the range of possible values for the parameters. In particular, we look at how the tuning parameter influence the mixing properties of the simulated Markov Chain with respect to $\beta$, $\lambda_0$ and $\lambda_1$:
 
-Skriv inn!!! 
+```{r, echo=FALSE}
+beta.plot.1 <- ggplot(th1.df,aes(x=seq(1,length(t1),1),y=beta)) + geom_line() + 
+  labs(y="beta",x="iterations")
+beta.plot.5 <- ggplot(th5.df,aes(x=seq(1,length(t1),1),y=beta)) + geom_line() + 
+  labs(y="beta",x="iterations")
+beta.plot.10 <- ggplot(th10.df,aes(x=seq(1,length(t1),1),y=beta)) + geom_line() + 
+  labs(y="beta",x="iterations")
+beta.plot.20 <- ggplot(th20.df,aes(x=seq(1,length(t1),1),y=beta)) + geom_line() + 
+  labs(y="beta",x="iterations")
+
+ggarrange(ggarrange(beta.plot.1,beta.plot.5,ncol=2,labels=c("sigma = 1","sigma = 5")),
+          ggarrange(beta.plot.10,beta.plot.20,ncol=2,labels=c("sigma = 10", "sigma = 20")),
+          nrow = 2)
+
+l0.plot.1 <- ggplot(th1.df,aes(x=seq(1,length(t1),1),y=l0)) + geom_line() + 
+  labs(y="l0",x="iterations")
+l0.plot.5 <- ggplot(th5.df,aes(x=seq(1,length(t1),1),y=l0)) + geom_line() + 
+  labs(y="l0",x="iterations")
+l0.plot.10 <- ggplot(th10.df,aes(x=seq(1,length(t1),1),y=l0)) + geom_line() + 
+  labs(y="l0",x="iterations")
+l0.plot.20 <- ggplot(th20.df,aes(x=seq(1,length(t1),1),y=l0)) + geom_line() + 
+  labs(y="l0",x="iterations")
+
+ggarrange(ggarrange(l0.plot.1,l0.plot.5,ncol=2,labels=c("sigma = 1","sigma = 5")),
+          ggarrange(l0.plot.10,l0.plot.20,ncol=2,labels=c("sigma = 10", "sigma = 20")),
+          nrow = 2)
+
+l1.plot.1 <- ggplot(th1.df,aes(x=seq(1,length(t1),1),y=l1)) + geom_line() + 
+  labs(y="l1",x="iterations")
+l1.plot.5 <- ggplot(th5.df,aes(x=seq(1,length(t1),1),y=l1)) + geom_line() + 
+  labs(y="l1",x="iterations")
+l1.plot.10 <- ggplot(th10.df,aes(x=seq(1,length(t1),1),y=l1)) + geom_line() + 
+  labs(y="l1",x="iterations")
+l1.plot.20 <- ggplot(th20.df,aes(x=seq(1,length(t1),1),y=l1)) + geom_line() + 
+  labs(y="l1",x="iterations")
+
+ggarrange(ggarrange(l1.plot.1,l1.plot.5,ncol=2,labels=c("sigma = 1","sigma = 5")),
+          ggarrange(l1.plot.10,l1.plot.20,ncol=2,labels=c("sigma = 10", "sigma = 20")),
+          nrow = 2)
+```
+The sampled parameters are plotted along the number of iterations. 
+The algorithm seems to mix relatively well for all values of $\sigma$ for all parameters except $\lambda_1$. Here we can observe that the algorithm moves more slowly between the different values of $\lambda_1$ when $\sigma = 1,$ i.e. quite low. 
 
 ## 7
 
-We now implement the MCMC using block proposals for: 
-* $(t_1, \lambda_0, \lambda_1)$ keeping $\beta$ constant
-* $(\beta, \lambda_0, \lambda_1)$ keeping $t_1$ constant.
+We now implement the MCMC using block proposals for:
+
+$(t_1, \lambda_0, \lambda_1)$ keeping $\beta$ constant
+$(\beta, \lambda_0, \lambda_1)$ keeping $t_1$ constant
+
 We alternate between these two block updates for every iteration, and we a an implementation of the algorithm below. 
 
-In the first block, we sample $\tilde{t_1}$ from a normal distribution, as in section 4), and $\lambda_0$ and $\lambda_1$ are sampled from their full conditionals conditioned on the proposed $\tilde{t}_t$ BEGRUNNELSE JOINT = MARGINAL. This gives us the following acceptance probability $\alpha_1$:
+In the first block, we sample $\tilde{t_1}$ from a normal distribution, as in section 4), and $\lambda_0$ and $\lambda_1$ are sampled from their full conditionals conditioned on the proposed $\tilde{t}_t$. We note that sampling $\lambda_0$ and $\lambda_1$ from their joint conditional $f(\lambda_1, \lambda_0 \mid t_1, \beta, x)$ is equivalent to sampling them from their marginal conditionals, as the joint conditional is the product of the marginal conditionals:
+
+$$
+f(\lambda_0, \lambda_1 \mid x, \beta, t_1) = \frac{\lambda_0^{y_0 + 1}\lambda_1^{y_1 + 1}e^{-\lambda_0(t_1 - t_0 + \frac{1}{\beta})}e^{-\lambda_1(t_2 - t_1 + \frac{1}{\beta})}}{\int_0^{\infty}\int_0^{\infty}\lambda_0^{y_0 + 1}\lambda_1^{y_1 + 1}e^{-\lambda_0(t_1 - t_0 + \frac{1}{\beta})}e^{-\lambda_1(t_2 - t_1 + \frac{1}{\beta})}\text{d}\lambda_0\text{d}\lambda_1}
+$$
+$$
+\propto \lambda_0^{y_0 + 1}\lambda_1^{y_1 + 1}e^{-\lambda_0(t_1 - t_0 + \frac{1}{\beta})}e^{-\lambda_1(t_2 - t_1 + \frac{1}{\beta})}
+$$
+$$
+\propto f(\lambda_0 \mid \lambda_1, x, \beta, t_1)\cdot f(\lambda_1 \mid \lambda_0, \beta, t_1, x).
+$$
+This gives us the following acceptance probability $\alpha_1$:
 $$
 \alpha_1 = \text{min}(1, \frac{\pi(\tilde{t}_1, \tilde{\lambda}_0, \tilde{\lambda}_1\mid \beta)}{\pi(t_1, \lambda_0, \lambda_1 \mid \beta)}\times\frac{Q(t_1, \lambda_0, \lambda_1 \mid \tilde{t}_1, \tilde{\lambda}_0, \tilde{\lambda}_1, \beta)}{Q(\tilde{t}_1, \tilde{\lambda}_0, \tilde{\lambda}_1 \mid t_1, \lambda_0, \lambda_1, \beta)}).
 $$
@@ -327,7 +400,7 @@ $\pi(t_1,\lambda_0,\lambda_1 \mid \beta)$ and $Q(t_1, \lambda_0, \lambda_1 \mid 
 $$
 \alpha_{1} = \min\bigg(1, \frac{(t_1 - t_0 + \frac{1}{\beta})^{y_0 + 2}(t_2 - t_1 + \frac{1}{\beta})^{y_1 + 2}}{(\tilde{t}_1 - t_0 + \frac{1}{\beta})^{\tilde{y}_1 + 2}(t_2 - \tilde{t}_1 + \frac{1}{\beta})^{\tilde{y}_1 + 2}}\times\frac{\Gamma(\tilde{y}_0 + 2)\Gamma(\tilde{y}_1 + 2)}{\Gamma(y_0+2)\Gamma(y_1 + 2)}\bigg).
 $$
-In the second block, we keep $t_1$ constant while sampling $\tilde{\beta}$ from a normal distribution centered at the last value of $\beta$ with variance $\sigma_2^2}$, and then sample $\tilde{\lambda}_0$ and $\tilde{\lambda}_1$ from their full conditionals conditioned on $\tilde{\beta}$. With this approach, we get the expression for the acceptance probability $\alpha_2$:
+In the second block, we keep $t_1$ constant while sampling $\tilde{\beta}$ from a normal distribution centered at the last value of $\beta$ with variance $\sigma_2^2$, and then sample $\tilde{\lambda}_0$ and $\tilde{\lambda}_1$ from their full conditionals conditioned on $\tilde{\beta}$. With this approach, we get the expression for the acceptance probability $\alpha_2$:
 $$
 \alpha_2 = \min\bigg(1, \frac{\pi(\tilde{\lambda}_0, \tilde{\lambda}_1, \tilde{\beta}\mid t_1)}{\pi(\lambda_0, \lambda_1, \beta \mid t_1)}\times\frac{Q(\lambda_0, \lambda_1, \beta \mid \tilde{\lambda}_0, \tilde{\lambda}_1, \tilde{\beta}, t_1)}{Q(\tilde{\lambda}_0, \tilde{\lambda}_1, \tilde{\beta}\mid  \lambda_0, \lambda_1, \beta , t_1)}\bigg),
 $$
@@ -344,7 +417,7 @@ $$
 $$
 Inserting these, and the corresponding expressions for $\pi(\lambda_0, \lambda_1, \beta \mid t_1)$ and $Q(\lambda_0, \lambda_1, \beta \mid \tilde{\lambda}_0, \tilde{\lambda}_1, \tilde{\beta}, t_1)$ into our expression for $\alpha_2$ we get
 $$
-\alpha_2 = \min\bigg(1, \frac{\beta^5}{\tilde{\beta}^5}\cdot \frac{(t_1 - t_0 + \frac{1}{\beta})^{y_0 + 2}(t_1 - t_1 + \frac{1}{\beta})^{y_1 + 2}}{(t_1 - t_0 + \frac{1}{\tilde{\beta}})^{y_0 + 2}(t_2 - t_1 + \frac{1}{\tilde{\beta}})^{y_1 + 2}}\bigg)
+\alpha_2 = \min\bigg(1, \frac{\beta^5}{\tilde{\beta}^5}\cdot \frac{(t_1 - t_0 + \frac{1}{\beta})^{y_0 + 2}(t_1 - t_1 + \frac{1}{\beta})^{y_1 + 2}}{(t_1 - t_0 + \frac{1}{\tilde{\beta}})^{y_0 + 2}(t_2 - t_1 + \frac{1}{\tilde{\beta}})^{y_1 + 2}}\bigg).
 $$
 
 
@@ -379,7 +452,8 @@ block.1 <- function(theta,i,sigma,t0,t2){
   l1.n <- rgamma(1,shape = y1.n + 2, scale = 1/(t2 - t1.n + 1/beta))
   
   # find alpha
-  g.fact <- sum(log(1:y0.n + 1)) + sum(log(1:y1.n + 1)) - sum(log(1:y0+1)) - sum(log(1:y1+1))
+  g.fact <- sum(log(1:y0.n + 1)) + sum(log(1:y1.n + 1)) - 
+    sum(log(1:y0+1)) - sum(log(1:y1+1))
   
   t.fact <- (y0 + 2)*log(t1 - t0 + 1/beta) + 
     (y1 + 2)*log(t2 - t1 + 1/beta) - 
@@ -440,9 +514,6 @@ block.2 <- function(theta,i,sigma, t0, t2){
   # sample l1 from Gamma distribution with new beta
   l1.n <- rgamma(1,shape = y1 + 2, scale = 1/(t2 - t1 + 1/beta.n))
   
-  # find alpha
-  #alpha <- (beta^5*(t1 - t0 + 1/beta)^(y0 + 2)*(t2 - t1 + 1/beta)^(y1 + 2))/(beta.n^5^(t1 - t0 + 1/beta.n)^(y0 + 2)*(t2 - t1 + 1/beta.n)^(y1 + 2))
-  
   alpha.lg <- 5*log(beta) - 5*log(beta.n) + 
     (y0 + 2)*log(t1 - t0 + 1/beta) + 
     (y1 + 2)*log(t2 - t1 + 1/beta) - 
@@ -480,8 +551,10 @@ MH <- function(n,t1.0,l0.0,l1.0,beta.0, obs, sigma1, sigma2){
   t2 <- tail(coal$date,1)
   
   theta["t1",1] <- t1.0
-  theta["y0",1] <- max(which(coal$date < theta["t1",1])) - 1 # disasters before t1, subtracting the first element which is not a disaster
-  theta["y1",1] <- length(coal$date) - theta["y0",1] - 2 # disasters at and after t1, subtracting start time and end time element
+  # disasters before t1, subtracting the first element which is not a disaster
+  theta["y0",1] <- max(which(coal$date < theta["t1",1])) - 1
+  # disasters at and after t1, subtracting start time and end time element
+  theta["y1",1] <- length(coal$date) - theta["y0",1] - 2 
   
   theta["l0",1] <- l0.0
   theta["l1",1] <- l1.0
@@ -501,19 +574,22 @@ MH <- function(n,t1.0,l0.0,l1.0,beta.0, obs, sigma1, sigma2){
   return(theta)
 }
 ```
-In the second block, we update $\beta$ by sampling from a normal distibution with mean $\beta_{i-1}$ and variance $\sigma_2².$ We show the results for $\sigma_2²=[0.1,1,10]$ while keeping the variance in the sampling of $t_1$, $\sigma_1²=10,$ as we found this to be a good value in section A4). 
+In the second block, we update $\beta$ by sampling from a normal distibution with mean $\beta_{i-1}$ and variance $\sigma_2^2.$ We show the results for $\sigma_2^2=[0.1,1,10]$ while keeping the variance in the sampling of $t_1$, $\sigma_1^2=10,$ as we found this to be a good value in section A4). 
 
 ```{r}
 # var2 = 0.1
-blc.01 <- MH(n=10000, t1.0=1900,l0.0 = 3,l1.0 = 1,beta.0  = 1, obs = coal, sigma1 = 10, sigma2 = 0.1)
+blc.01 <- MH(n=40000, t1.0=1940,l0.0 = 3,l1.0 = 1,
+             beta.0  = 1, obs = coal, sigma1 = 10, sigma2 = 0.1)
 blc.01.df <- as.data.frame(t(blc.01))
 
 # var2 = 1
-blc.1 <- MH(n=10000, t1.0=1900,l0.0 = 3,l1.0 = 1,beta.0  = 1, obs = coal, sigma1 = 10, sigma2 = 1)
+blc.1 <- MH(n=40000, t1.0=1940,l0.0 = 3,l1.0 = 1,
+            beta.0  = 1, obs = coal, sigma1 = 10, sigma2 = 1)
 blc.1.df <- as.data.frame(t(blc.1))
 
-# var2  =10
-blc.10 <- MH(n=10000, t1.0=1900,l0.0 = 3,l1.0 = 1,beta.0  = 1, obs = coal, sigma1 = 10, sigma2 = 10)
+# var2  = 10
+blc.10 <- MH(n=40000, t1.0=1940,l0.0 = 3,l1.0 = 1,
+             beta.0  = 1, obs = coal, sigma1 = 10, sigma2 = 10)
 blc.10.df <- as.data.frame(t(blc.10))
 
 acc.01 <- mean(blc.01.df$accept); cat("acceptante 0.1: ", acc.01, "\n")
@@ -521,15 +597,78 @@ acc.1 <- mean(blc.1.df$accept); cat("acceptance rate 1: ", acc.1, "\n")
 acc.10 <- mean(blc.10.df$accept); cat("acceptance rate 10: ", acc.10, "\n")
 
 # plotting results for the different sigmas:
+
 relevant.plots(blc.01.df,coal,1000)
 relevant.plots(blc.1.df,coal,1000)
 relevant.plots(blc.10.df,coal,1000)
 
 ```
-We observe that while all values of $\sigma_2²$ seem to produce reasonable results, $\sigma_2² = 0.1$ makes the algoritm explore the $\beta$ values more slowly, which again leads to slower convergence. For $\sigma_2² = 0.1,$ the acceptance rate is also slightly higher than optimal, we usually want an acceptance rate between 20$\%$ and 50$\%$ for random-walk proposals. 
+Above the simulated Markov Chain is plotted for $\sigma_2^2 = 0.1$ (top), $\sigma_2^2 = 1$ (middle) and $\sigma_2^2 = 10$ (bottom).
+We observe that while all values of $\sigma_2^2$ seem to produce reasonable results, $\sigma_2^2 = 0.1$ makes the algoritm explore the $\beta$ values more slowly. For $\sigma_2^2 = 0.1,$ the acceptance rate is also slightly higher than optimal, we usually want an acceptance rate between 20$\%$ and 50$\%$ for random-walk proposals. None of the values for $\sigma_2$ seemed to produce very long burn-in periods for either of the parameters. 
 
+To be able to compare the performance of the block-update algoritm versus the single-site algorthm, we run the block algorithm with $\sigma_1=1$, for which the single-site algorithm did not produce a very good result. 
 
+```{r, eval}
+# var2  = 10
+blc.1.1 <- MH(n=40000, t1.0=1940,l0.0 = 3,l1.0 = 1,
+             beta.0  = 1, obs = coal, sigma1 = 1, sigma2 = 1)
+blc.1.1.df <- as.data.frame(t(blc.1.1))
 
+acc.1.1 <- mean(blc.1.1.df$accept); cat("acceptance rate sigma1 = 1: ", acc.1.1, "\n")
+relevant.plots(blc.1.1.df,coal,1000)
+
+```
+From the plots of the samples of $t_1$ and $\lambda_0$ we observe that there is a significantly shorter burn-in period compared to the corresponding realization in the single-site algoritm. For the block-update, a burn-in period of about 2000 iterations seems to be sufficient for $t_1$, compared to 35000 iterations for the single-site algorithm. This indicates that the block-algorithm converges faster for less optimal values of the tuning parameter than the single-site algorithm does. 
+
+We want to use the simulation results to estimate the marginal posterior distributions $f(t_1\mid x), f(\lambda_0\mid x), f(\lambda_1\mid x)$ and $f(\beta \mid x).$ For $f(\lambda_0 \mid x)$ and $f(\lambda_1 \mid x)$ we use the simulation results from the block-update algorithm with $\sigma_1 = 10$ and $\sigma_2 = 1.$ For $f(t_1 \mid x)$ and $f(\beta \mid x)$ we use the single-site algorithm with $\sigma_1 = 10,$ as this seemed to provide better properties for these parameters. To find the simulated marginal distributions we have used the full conditionals for the parameters together with the sample mean of the remaining parameters from the simulation. The results are seen below:
+
+```{r}
+# mean values: 
+t1.mean <- mean(th10.df[1000:length(th10.df$t1),]$t1)
+cat("Expected value of t1: ",t1.mean, "\n")
+y0.mean <- mean(th10.df[1000:length(th10.df$t1),]$y0)
+y1.mean <- mean(th10.df[1000:length(th10.df$t1),]$y1)
+beta.mean <- mean(th10.df[1000:length(th10.df$t1),]$beta)
+cat("Expected value of beta: ", beta.mean, "\n")
+
+l0.mean <- mean(blc.1.df[1000:length(blc.1.df$t1),]$l0)
+cat("Expected value of lambda 0: ", l0.mean, "\n")
+l1.mean <- mean(blc.1.df[1000:length(blc.1.df$t1),]$l1)
+cat("Expected value of lambda 1: ", l1.mean, "\n")
+
+# covariance of lambda 1 and lambda 0:
+cov.l0.l1 <- cov(blc.1.df[1000:length(blc.1.df$t1),]$l0,blc.1.df[1000:length(blc.1.df$t1),]$l1)
+cat("Covariance of lambda 0 and lambda 1: ",cov.l0.l1)
+
+f.t1 <- ggplot(th10.df,aes(x=t1)) + geom_density(color="darkblue", fill="lightblue") + 
+  ggtitle(label="t1") + labs(y="f(t1|x)",x="t1")
+f.t1
+
+f.beta <- ggplot(th10.df,aes(x=beta)) + geom_density(color="darkblue", fill="lightblue")
+f.beta <- f.beta + stat_function(fun=dinvgamma, args=list(shape=4, scale=1/(l0.mean + l1.mean + 1)),
+                                 color = "orange", size = 0.75) + 
+  xlim(0,20) + ggtitle(label="beta") + labs(x="beta",y="f(beta|x)")
+f.beta
+
+f.l0 <- ggplot(blc.1.df,aes(x=l0)) + geom_density(color="darkblue", fill="lightblue")
+f.l0 <- f.l0 + stat_function(fun=dgamma, 
+                             args=list(shape=y0.mean + 2, 
+                                       scale=1/(t1.mean - coal$date[1] + 1/beta.mean)),
+                             color="orange",size=1) + labs(x="lambda0",y="f(lambda0|x)")
+f.l0
+
+f.l1 <- ggplot(blc.1.df,aes(x=l1)) + geom_density(color="darkblue", fill="lightblue")
+f.l1 <- f.l1 + stat_function(fun=dgamma, 
+                             args=list(shape=y1.mean + 2, 
+                                       scale=1/(tail(coal$date,1) - t1.mean + 1/beta.mean)),
+                             color="orange",size=1) + xlim(0,3) + ggtitle(label="lambda 1") +
+  labs(x="lqmbda 1",y="f(lambda1 | x)")
+f.l1
+
+```
+Here, we see the sample density (blue) plotted together with the marginal conditionals (orange) where the mean of the remaining parameters are used as model parameters. The execption is $f(t_1\mid x)$ where we do not have a simple expression for the density, as the conditional marginal of $t_1$ is a function of the non-continous $y_0(t_1)$ and $y_1(t_1)$. We observe that the gamma distribution fit well with $f(\lambda_0 \mid x)$ and $f(\lambda_1 \mid x)$ and that the inverse-gamma distribution is a good fit for $f(\beta \mid x)$.
+
+The covariance of $\lambda_0$ and $\lambda_1$ is found to be 0.002, which is low and indicates that $\lambda_1$ and $\lambda_0$ are independent. This is in line with our previous reasoning in section 7), where we argued that $\lambda_1$ and $\lambda_0$ are independent because their joint conditional is the product of their marginal conditionals. 
 
 
 
