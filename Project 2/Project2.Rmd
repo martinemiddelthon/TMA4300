@@ -1,5 +1,6 @@
 ---
 title: "Project2 - Part A"
+author: "Martine Middelthon and Helene Behrens"
 output:
   pdf_document: default
   html_document: default
@@ -311,7 +312,7 @@ cf.20 <- compare.fit(th20.df,1000)
 ggarrange(ggarrange(cf.1,cf.5,ncol=2),ggarrange(cf.10,cf.20,ncol=2),nrow = 2)
 
 ```
-We observe that when we take the burn-in into consideration, the algoritm seems to produce a good fit with all values of $\sigma$,and we see that the value of $\sigma$ does then not influence the limiting distribution. To evaluate the mixing properties of the algortim, we look at how well the algoritm explores the range of possible values for the parameters. In particular, we look at how the tuning parameter influence the mixing properties of the simulated Markov Chain with respect to $\beta$, $\lambda_0$ and $\lambda_1$:
+We observe that when we take the burn-in into consideration, the algoritm seems to produce a good fit with all values of $\sigma$, with an exception of when $\sigma = 1$, where we observe that the algorithm did still not reach good convergence. To evaluate the mixing properties of the algortim, we look at how well the algoritm explores the range of possible values for the parameters. In particular, we look at how the tuning parameter influence the mixing properties of the simulated Markov Chain with respect to $\beta$, $\lambda_0$ and $\lambda_1$:
 
 ```{r, echo=FALSE}
 beta.plot.1 <- ggplot(th1.df,aes(x=seq(1,length(t1),1),y=beta)) + geom_line() + 
@@ -608,7 +609,7 @@ We observe that while all values of $\sigma_2^2$ seem to produce reasonable resu
 
 To be able to compare the performance of the block-update algoritm versus the single-site algorthm, we run the block algorithm with $\sigma_1=1$, for which the single-site algorithm did not produce a very good result. 
 
-```{r, eval}
+```{r}
 # var2  = 10
 blc.1.1 <- MH(n=40000, t1.0=1940,l0.0 = 3,l1.0 = 1,
              beta.0  = 1, obs = coal, sigma1 = 1, sigma2 = 1)
