@@ -136,13 +136,13 @@ relevant.plots(theta.df,coal)
 relevant.plots(test.df,coal, 7400)
 
 # plot of sigma:
-th1 <- Alg.4(100000,1890,2.5,1,0.2,coal,1)
+th1 <- Alg.4(50000,1940,2.5,1,0.2,coal,1)
 th1.df <- as.data.frame(t(th1))
-th5 <- Alg.4(100000,1890,2.5,1,0.2,coal,5)
+th5 <- Alg.4(50000,1940,2.5,1,0.2,coal,5)
 th5.df <- as.data.frame(t(th5))
-th10 <- Alg.4(100000,1890,2.5,1,0.2,coal,10)
+th10 <- Alg.4(50000,1940,2.5,1,0.2,coal,10)
 th10.df <- as.data.frame(t(th10))
-th20 <- Alg.4(100000,1890,2.5,1,0.2,coal,20)
+th20 <- Alg.4(50000,1940,2.5,1,0.2,coal,20)
 th20.df <- as.data.frame(t(th20))
 
 sig.plot.1 <- ggplot(th1.df,aes(x=seq(1,length(t1),1),y=t1)) + geom_line()
@@ -157,8 +157,6 @@ sig.plot.20
 ggarrange(ggarrange(sig.plot.1,sig.plot.5,ncol=2,labels=c("sigma = 1","sigma = 5")),
           ggarrange(sig.plot.10,sig.plot.20,ncol=2,labels=c("sigma = 10", "sigma = 20")),
           nrow = 2)
-
-
 
 
 t1.mean <- mean(test.df[7400:length(test.df$t1),]$t1)

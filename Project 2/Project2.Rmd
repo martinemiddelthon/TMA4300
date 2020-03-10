@@ -303,9 +303,9 @@ We now implement the MCMC using block proposals for:
 * $(\beta, \lambda_0, \lambda_1)$ keeping $t_1$ constant.
 We alternate between these two block updates for every iteration, and we a an implementation of the algorithm below. 
 
-In the first block, we sample $\tilde{t_1}$ from a normal distribution, as in section 4), and $\lambda_0$ and $\lambda_1$ are sampled from their full conditionals conditioned on the proposed $\tilde{t}_t$ BEGRUNNELSE JOINT = MARGINAL. This gives us the following acceptance probability:
+In the first block, we sample $\tilde{t_1}$ from a normal distribution, as in section 4), and $\lambda_0$ and $\lambda_1$ are sampled from their full conditionals conditioned on the proposed $\tilde{t}_t$ BEGRUNNELSE JOINT = MARGINAL. This gives us the following acceptance probability $\alpha_1$:
 $$
-\alpha = \text{min}(1, \frac{\pi(\tilde{t}_1, \tilde{\lambda}_0, \tilde{\lambda}_1\mid \beta)}{\pi(t_1, \lambda_0, \lambda_1 \mid \beta)}\times\frac{Q(t_1, \lambda_0, \lambda_1 \mid \tilde{t}_1, \tilde{\lambda}_0, \tilde{\lambda}_1, \beta)}{Q(\tilde{t}_1, \tilde{\lambda}_0, \tilde{\lambda}_1 \mid t_1, \lambda_0, \lambda_1, \beta)}).
+\alpha_1 = \text{min}(1, \frac{\pi(\tilde{t}_1, \tilde{\lambda}_0, \tilde{\lambda}_1\mid \beta)}{\pi(t_1, \lambda_0, \lambda_1 \mid \beta)}\times\frac{Q(t_1, \lambda_0, \lambda_1 \mid \tilde{t}_1, \tilde{\lambda}_0, \tilde{\lambda}_1, \beta)}{Q(\tilde{t}_1, \tilde{\lambda}_0, \tilde{\lambda}_1 \mid t_1, \lambda_0, \lambda_1, \beta)}).
 $$
 We look more closely at these expressions:
 $$
@@ -321,8 +321,32 @@ $$
 \pi(\tilde{t_1},\tilde{\lambda_0},\tilde{\lambda_1}\mid \beta) \propto \pi(\tilde{t_1},\tilde{\lambda_0},\tilde{\lambda_1},\beta)
 $$
 $$
-\propto \tilde{\lambda}_0^{\tilde{y}_0+1}\cdot \tilde{\lambda}_1^{\tilde{y}_1+1}e^{-\tilde{\lambda}_0(\tilde{t}_1-t_0 + \frac{1}{\beta})}e^{-\tilde{\lambda}_1(t_2 - \tilde{t}_1 + \frac{1}{\beta})}
+\propto \tilde{\lambda}_0^{\tilde{y}_0+1}\cdot \tilde{\lambda}_1^{\tilde{y}_1+1}\cdot e^{-\tilde{\lambda}_0(\tilde{t}_1-t_0 + \frac{1}{\beta})}\cdot e^{-\tilde{\lambda}_1(t_2 - \tilde{t}_1 + \frac{1}{\beta})}.
 $$
+$\pi(t_1,\lambda_0,\lambda_1 \mid \beta)$ and $Q(t_1, \lambda_0, \lambda_1 \mid \tilde{t}_1, \tilde{\lambda}_0, \tilde{\lambda}_1, \beta)$ will be on the same form. When inserting this into the expression for $\alpha$ we see that many of the factors cancel, and we are left with the expression
+$$
+\alpha_{1} = \min\bigg(1, \frac{(t_1 - t_0 + \frac{1}{\beta})^{y_0 + 2}(t_2 - t_1 + \frac{1}{\beta})^{y_1 + 2}}{(\tilde{t}_1 - t_0 + \frac{1}{\beta})^{\tilde{y}_1 + 2}(t_2 - \tilde{t}_1 + \frac{1}{\beta})^{\tilde{y}_1 + 2}}\times\frac{\Gamma(\tilde{y}_0 + 2)\Gamma(\tilde{y}_1 + 2)}{\Gamma(y_0+2)\Gamma(y_1 + 2)}\bigg).
+$$
+In the second block, we keep $t_1$ constant while sampling $\tilde{\beta}$ from a normal distribution centered at the last value of $\beta$ with variance $\sigma_2^2}$, and then sample $\tilde{\lambda}_0$ and $\tilde{\lambda}_1$ from their full conditionals conditioned on $\tilde{\beta}$. With this approach, we get the expression for the acceptance probability $\alpha_2$:
+$$
+\alpha_2 = \min\bigg(1, \frac{\pi(\tilde{\lambda}_0, \tilde{\lambda}_1, \tilde{\beta}\mid t_1)}{\pi(\lambda_0, \lambda_1, \beta \mid t_1)}\times\frac{Q(\lambda_0, \lambda_1, \beta \mid \tilde{\lambda}_0, \tilde{\lambda}_1, \tilde{\beta}, t_1)}{Q(\tilde{\lambda}_0, \tilde{\lambda}_1, \tilde{\beta}\mid  \lambda_0, \lambda_1, \beta , t_1)}\bigg),
+$$
+where, similarily to the case in the first block
+$$
+Q(\tilde{\lambda}_0, \tilde{\lambda}_1, \tilde{\beta} \mid \lambda_0, \lambda_1, \beta, t_1) = Q(\tilde{\lambda}_0, \tilde{\lambda}_1 \mid \tilde{\beta}, t_1)\cdot \mathrm{N}(\beta, \sigma_2),
+$$
+$$
+Q(\tilde{\lambda}_0, \tilde{\lambda}_1 \mid \tilde{\beta}, t_1) = \frac{\tilde{\lambda_0}^{y_0+1}(t_1 - t_0 + \frac{1}{\tilde{\beta}})^{y_0+2}e^{-\tilde{\lambda}_0(t_1-t_0 + \frac{1}{\tilde{\beta}})}}{\Gamma(y_0 + 2)}\times \frac{\tilde{\lambda}_1^{y_1+1}(t_2 - t_1 + \frac{1}{\tilde{\beta}})^{y_1+2}e^{-\tilde{\lambda}_1(t_2 - t_1 + \frac{1}{\tilde{\beta}})}}{\Gamma(y_1+2)}
+$$
+and
+$$
+\pi(\tilde{\lambda}_0, \tilde{\lambda}_1, \tilde{\beta} \mid t_1) \propto \frac{1}{\tilde{\beta}^5}\cdot \tilde{\lambda}_0^{y_0+1}\cdot \tilde{\lambda}_1^{y_1+1}\cdot e^{-\tilde{\lambda}_0(t_1-t_0 + \frac{1}{\tilde{\beta}})}\cdot e^{-\tilde{\lambda}_1(t_2 - t_1 + \frac{1}{\tilde{\beta}})}.
+$$
+Inserting these, and the corresponding expressions for $\pi(\lambda_0, \lambda_1, \beta \mid t_1)$ and $Q(\lambda_0, \lambda_1, \beta \mid \tilde{\lambda}_0, \tilde{\lambda}_1, \tilde{\beta}, t_1)$ into our expression for $\alpha_2$ we get
+$$
+\alpha_2 = \min\bigg(1, \frac{\beta^5}{\tilde{\beta}^5}\cdot \frac{(t_1 - t_0 + \frac{1}{\beta})^{y_0 + 2}(t_1 - t_1 + \frac{1}{\beta})^{y_1 + 2}}{(t_1 - t_0 + \frac{1}{\tilde{\beta}})^{y_0 + 2}(t_2 - t_1 + \frac{1}{\tilde{\beta}})^{y_1 + 2}}\bigg)
+$$
+
 
 ```{r}
 block.1 <- function(theta,i,sigma,t0,t2){
