@@ -607,19 +607,19 @@ relevant.plots(blc.10.df,coal,1000)
 Above the simulated Markov Chain is plotted for $\sigma_2^2 = 0.1$ (top), $\sigma_2^2 = 1$ (middle) and $\sigma_2^2 = 10$ (bottom).
 We observe that while all values of $\sigma_2^2$ seem to produce reasonable results, $\sigma_2^2 = 0.1$ makes the algoritm explore the $\beta$ values more slowly. For $\sigma_2^2 = 0.1,$ the acceptance rate is also slightly higher than optimal, we usually want an acceptance rate between 20$\%$ and 50$\%$ for random-walk proposals. None of the values for $\sigma_2$ seemed to produce very long burn-in periods for either of the parameters. 
 
-To be able to compare the performance of the block-update algoritm versus the single-site algorthm, we run the block algorithm with $\sigma_1=1$, for which the single-site algorithm did not produce a very good result. 
+To be able to compare the performance of the block-update algoritm versus the single-site algorthm, we run the block algorithm with $\sigma_1=5$, for which the single-site algorithm produced a quite long burn-in period.   
 
 ```{r}
 # var2  = 10
 blc.1.1 <- MH(n=40000, t1.0=1940,l0.0 = 3,l1.0 = 1,
-             beta.0  = 1, obs = coal, sigma1 = 1, sigma2 = 1)
+             beta.0  = 1, obs = coal, sigma1 = 5, sigma2 = 1)
 blc.1.1.df <- as.data.frame(t(blc.1.1))
 
 acc.1.1 <- mean(blc.1.1.df$accept); cat("acceptance rate sigma1 = 1: ", acc.1.1, "\n")
 relevant.plots(blc.1.1.df,coal,1000)
 
 ```
-From the plots of the samples of $t_1$ and $\lambda_0$ we observe that there is a significantly shorter burn-in period compared to the corresponding realization in the single-site algoritm. For the block-update, a burn-in period of about 2000 iterations seems to be sufficient for $t_1$, compared to 35000 iterations for the single-site algorithm. This indicates that the block-algorithm converges faster for less optimal values of the tuning parameter than the single-site algorithm does. 
+From the plots of the samples of $t_1$ and $\lambda_0$ we observe that there is a significantly longer burn-in period compared to the corresponding realization in the single-site algoritm. For the block-update, a burn-in period of 15000 iterations seems to be sufficient for $t_1$, compared to about 2500 iterations for the single-site algorithm. This indicates that the single-site algorithm converges faster for less optimal values of the tuning parameter $\sigma_1$ than the block-update algorithm does. 
 
 We want to use the simulation results to estimate the marginal posterior distributions $f(t_1\mid x), f(\lambda_0\mid x), f(\lambda_1\mid x)$ and $f(\beta \mid x).$ For $f(\lambda_0 \mid x)$ and $f(\lambda_1 \mid x)$ we use the simulation results from the block-update algorithm with $\sigma_1 = 10$ and $\sigma_2 = 1.$ For $f(t_1 \mid x)$ and $f(\beta \mid x)$ we use the single-site algorithm with $\sigma_1 = 10,$ as this seemed to provide better properties for these parameters. To find the simulated marginal distributions we have used the full conditionals for the parameters together with the sample mean of the remaining parameters from the simulation. The results are seen below:
 
