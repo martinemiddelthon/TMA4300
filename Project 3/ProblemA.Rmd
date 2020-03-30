@@ -1,0 +1,34 @@
+---
+title: "Oblig3 - TMA4300"
+author: "Martine Middelthon"
+date: "30 3 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Problem A
+
+```{r}
+# Load data and functions
+helpR = source("probAhelp.R")
+dataR = source("probAdata.R")
+```
+
+## 1.
+
+```{r}
+x = data3A$x
+betas = ARp.beta.est(x, 2)
+beta.LS = betas$LS
+beta.LA = betas$LA
+
+T = length(x)
+resids.est = rep(0, T-2) 
+for (t in (3:T)) {
+  resids.est[t-2] = x[t]
+}
+```
+
