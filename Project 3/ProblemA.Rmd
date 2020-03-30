@@ -20,15 +20,42 @@ dataR = source("probAdata.R")
 ## 1.
 
 ```{r}
+set.seed(0)
 x = data3A$x
 betas = ARp.beta.est(x, 2)
-beta.LS = betas$LS
-beta.LA = betas$LA
 
-T = length(x)
-resids.est = rep(0, T-2) 
-for (t in (3:T)) {
-  resids.est[t-2] = x[t]
+bootstrap.betas = function(x, betas, B=1500) {
+  T = length(x)
+  print(betas)
+  betaLS = betas[[1]]
+  betaLA = betas[[2]]
+  resids.est.LS = ARp.resid(x, betaLS)
+  resids.est.LA = ARp.resid(x, betaLA)
+  bootstrap.betaLS = matrix(0, nrow = length(betaLS), ncol = B)
+  bootstrap.betaLA = matrix(0, nrow = length(betaLA), ncol = B)
+    
+  for (i in (1:B)) {
+  random.index = sample(1:99, 1)
+  x0 = c(x[random.index], x[random.index+1])
+  x0 = rev(x0)
+  resample.residLS = sample(resids.est.LS, size = T, replace = TRUE)
+  resample.residLA = sample(resids.est.LA, size = T, replace = TRUE)
+  x.bootstrap.LS = ARp.filter(x0, betaLS, resample.residLS)
+  x.bootstrap.LA = ARp.filter(x0, betaLA, resample.residLA)
+  betas1 = ARp.beta.est(x.bootstrap.LS, 2)
+  betas2 = ARp.beta.est(x.bootstrap.LA, 2)
+  bootstrap.betaLS[,i] = betas1[[1]]
+  bootstrap.betaLA[,i] = betas1[[2]]
+  }
+  
+  return(rbind(bootstrap.betaLS, bootstrap.betaLA))
 }
+
+betas.boot = bootstrap.betas(x, betas, 1500)
+betaLS.var = c(var(betas.boot[1,]), var(betas.boot[2,]))
+betaLA.var = c(var(betas.boot[3,]), var(betas.boot[4,]))
+
+betaLS.var
+betaLA.var
 ```
 
