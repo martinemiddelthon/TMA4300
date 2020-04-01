@@ -15,47 +15,134 @@ knitr::opts_chunk$set(echo = TRUE)
 # Load data and functions
 helpR = source("probAhelp.R")
 dataR = source("probAdata.R")
+#plot(1:100, data3A$x)
 ```
 
 ## 1.
 
 ```{r}
-set.seed(0)
-x = data3A$x
-betas = ARp.beta.est(x, 2)
+set.seed(1)                   # For reproducibility
+x = data3A$x                  # Time series data
+betas = ARp.beta.est(x, 2)    # Estimated LS and LA coefficients
 
+#e = ARp.resid(x, betas[[1]])
+#length(e)
+#x0 = c(x[4], x[5])
+#x0 = rev(x0) # Revert the sequence
+#x.bootstrap = ARp.filter(x0, betas[[1]], e)
+#length(x.bootstrap)
+#x.bootstrap
+
+# Function to produce B bootstrap samples of the LS and LA coefficients
+# Using the method of bootstrapping residuals
 bootstrap.betas = function(x, betas, B=1500) {
   T = length(x)
-  print(betas)
   betaLS = betas[[1]]
   betaLA = betas[[2]]
+  # Calculate observed (centralized) residuals
   resids.est.LS = ARp.resid(x, betaLS)
   resids.est.LA = ARp.resid(x, betaLA)
+  # Matrices to store the bootstrap samples
   bootstrap.betaLS = matrix(0, nrow = length(betaLS), ncol = B)
   bootstrap.betaLA = matrix(0, nrow = length(betaLA), ncol = B)
-    
+  
+  # Create bootstrap samples
   for (i in (1:B)) {
-  random.index = sample(1:99, 1)
-  x0 = c(x[random.index], x[random.index+1])
-  x0 = rev(x0)
-  resample.residLS = sample(resids.est.LS, size = T, replace = TRUE)
-  resample.residLA = sample(resids.est.LA, size = T, replace = TRUE)
-  x.bootstrap.LS = ARp.filter(x0, betaLS, resample.residLS)
-  x.bootstrap.LA = ARp.filter(x0, betaLA, resample.residLA)
-  betas1 = ARp.beta.est(x.bootstrap.LS, 2)
-  betas2 = ARp.beta.est(x.bootstrap.LA, 2)
-  bootstrap.betaLS[,i] = betas1[[1]]
-  bootstrap.betaLA[,i] = betas1[[2]]
+    # Pick random consecutive sequence x0 from the data
+    random.index = sample(1:99, 1)
+    x0 = c(x[random.index], x[random.index+1])
+    x0 = rev(x0) # Revert the sequence
+    # Create a sample of the residuals
+    resample.residLS = sample(resids.est.LS, size = T, replace = TRUE)    
+    resample.residLA = sample(resids.est.LA, size = T, replace = TRUE)
+    # Calculate new sequence of data
+    x.bootstrap.LS = ARp.filter(x0, betaLS, resample.residLS)[3:(T+2)]
+    x.bootstrap.LA = ARp.filter(x0, betaLA, resample.residLA)[3:(T+2)]
+    # Estimate coefficients based on the sequence
+    betas1 = ARp.beta.est(x.bootstrap.LS, 2)
+    betas2 = ARp.beta.est(x.bootstrap.LA, 2)
+    # Store the bootstrap coefficients
+    bootstrap.betaLS[,i] = betas1[[1]]
+    bootstrap.betaLA[,i] = betas2[[2]]
   }
   
   return(rbind(bootstrap.betaLS, bootstrap.betaLA))
 }
 
-betas.boot = bootstrap.betas(x, betas, 1500)
-betaLS.var = c(var(betas.boot[1,]), var(betas.boot[2,]))
-betaLA.var = c(var(betas.boot[3,]), var(betas.boot[4,]))
+betas.boot = bootstrap.betas(x, betas, 1500)  # Bootstrapped LS and LA coefficients
+
+betaLS.var = c(var(betas.boot[1,]), var(betas.boot[2,]))    # ( var(beta_{LS,1}), var(beta_{LS,2}) )
+betaLA.var = c(var(betas.boot[3,]), var(betas.boot[4,]))    # ( var(beta_{LA,1}), var(beta_{LA,2}) )
 
 betaLS.var
 betaLA.var
+
+betaLS.mean = c(mean(betas.boot[1,]), mean(betas.boot[2,]))   # ( mean(beta_{LS,1}), mean(beta_{LS,2}) )
+betaLA.mean = c(mean(betas.boot[3,]), mean(betas.boot[4,]))   # ( mean(beta_{LA,1}), mean(beta_{LA,2}) )
+
+betaLS.bias = betaLS.mean - betas[[1]]    # ( bias(beta_{LS,1}), bias(beta_{LS,2}) )
+betaLA.bias = betaLA.mean - betas[[2]]    # ( bias(beta_{LA,1}), bias(beta_{LA,2}) )
+
+betaLS.bias
+betaLA.bias
 ```
+
+### OPTIMAL?
+
+## 2.
+
+```{r}
+library(MASS)
+
+predictionInterval = function(x, betas, B=1500) {
+  T = length(x)
+  betaLS = betas[[1]]
+  betaLA = betas[[2]]
+  # Calculate observed residuals
+  resids.est.LS = ARp.resid(x, betaLS)
+  resids.est.LA = ARp.resid(x, betaLA)
+  
+  boot.e101.LS = c()
+  boot.e101.LA = c()
+  
+  # Create bootstrap samples
+  for (i in (1:B)) {
+    # Pick random consecutive sequence x0 from the data
+    random.index = sample(1:99, 1)
+    x0 = c(x[random.index], x[random.index+1])
+    x0 = rev(x0) # Revert the sequence
+    # Create a sample of the residuals
+    resample.residLS = sample(resids.est.LS, size = T, replace = TRUE)
+    resample.residLA = sample(resids.est.LA, size = T, replace = TRUE)
+    # Calculate new sequence of data
+    x.bootstrap.LS = ARp.filter(x0, betaLS, resample.residLS)[3:(T+2)]    # Exclude initial sequence x0
+    x.bootstrap.LA = ARp.filter(x0, betaLA, resample.residLA)[3:(T+2)]    # Exclude initial sequence x0
+    # Estimate coefficients based on the sequence
+    betasLS = ARp.beta.est(x.bootstrap.LS, 2)[[1]]
+    betasLA = ARp.beta.est(x.bootstrap.LA, 2)[[2]]
+    # Store the corresponding residuals
+    boot.e101.LS = c(boot.e101.LS, ARp.resid(x.bootstrap.LS, betasLS))
+    boot.e101.LA = c(boot.e101.LA, ARp.resid(x.bootstrap.LA, betasLA))
+  }
+  
+  # Compute values for x101
+  x101.LS = betaLS[1] * x[T] + betaLS[2] * x[T-1] + boot.e101.LS
+  x101.LA = betaLA[1] * x[T] + betaLA[2] * x[T-1] + boot.e101.LA
+  
+  truehist(x101.LS)
+  truehist(x101.LA)
+  
+  # Estimate quantiles
+  quantilesLS = quantile(x101.LS, c(0.025, 0.975))
+  quantilesLA = quantile(x101.LA, c(0.025, 0.975))
+  
+  return(rbind(quantilesLS, quantilesLA))
+}
+
+result = predictionInterval(x, betas, 1500)
+result
+
+```
+
+
 
