@@ -53,3 +53,4 @@ From these, we compute the p-value as the probability to observe an F-statistic 
 p.val <- length(F.samp[F.samp>=Fval["value"]])/999; p.val
 ```
 The p-value is 0.044, so at a significance level 5$\%$ we reject the hypothesis that the bilirubin levels are the same for all individuals. 
+
