@@ -1,6 +1,6 @@
 ---
 title: "Problem3B"
-author: "Helene Behrens"
+author: "Martine Middelthon and Helene Behrens"
 date: "2 april 2020"
 output: html_document
 ---
@@ -9,22 +9,44 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+## Problem B
+We consider data of bilirubin concentration in blood of three different patients. 
+```{r}
+bilirubin <- read.table("https://www.math.ntnu.no/emner/TMA4300/2020v/Exercise/ex3-additionalFiles/bilirubin.txt", header=T)
 ```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+We plot this data for the three different individuals to compare their bilirubin concentrations. The resulting box-plots are seen below. 
+```{r}
+#  boxplot of logarithms of concentration for each indivicual:
+boxplot(log(meas)~pers, data=bilirubin,
+        main="Boxplot of Logarithm of Concentration", xlab="Individual", ylab="log(meas)")
 ```
+From this plot, we observe a clear tendency that the bilirubin levels are higher for person 3 (p3) than for person 1 and person 2. We want to invesigate wether this difference is significant. We use the $\texttt{lm}$ function to fit the regression model 
+$$
+\log(Y_{ij}) = \beta_i + \epsilon_{ij}, i=1,2,3, j=1,\ldots,n_i;
+$$
+where $n_1=11, n_2=10$ and $n_3=8$, and $\epsilon \sim N(0, \sigma^2).$ The results are shown below. 
+```{r}
+reg <- lm(log(meas)~pers, data=bilirubin)
+summary.lm <- summary(reg); summary.lm
+Fval <- summary.lm$fstatistic; Fval
+```
+We want test the hypothesis that $\beta_1=\beta_2=\beta_3,$ i.e. that the expected bilirubin levels are actually the same for all individuals. To check this, we use the F-test with the reported F statistic from the $\texttt{summary}$, `{r}Fval`. The reported p-value of this F-statistic is 0.039, and thus we can reject the hypothesis that $\beta_1=\beta_2=\beta_3$ at significance level 5$\%$. Alternatively, we can argue that the 95$\%$ quantile of the F-distribution with 2 and 26 degrees of freedom is `qf(.95, df1=2, df2=26)`, which is less than $\texttt{Fval}$, which gives the same conclusion. 
+```{r}
+#  defining function PermTest():
+PermTest <- function(bilirubin){
+  perm.df <- data.frame(meas=sample(bilirubin$meas), pers = bilirubin$pers)
+  reg <- lm(log(meas)~pers, data=perm.df)
+  Fval <- summary(reg)$fstatistic["value"]
+  return(Fval)
+}
+```
+We perform a perturbation test between the three individuals to check whether the value of the F-statistic is due to an actual difference in the bilirubin level in the individuals, or by chance in the distribution of the measurements between the individuals. Using the $\texttt{PermTest}$-function defined above, we generate 999 samples of the F-statistic:
+```{r}
+F.samp <- rep(0,999)
+for(i in 1:999){
+  F.samp[i] <- PermTest(bilirubin)
+}
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+#  compute p-value for Fval using F.samp:
+p.val <- length(F.samp[F.samp>=Fval["value"]])/999; p.val
+```
