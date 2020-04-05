@@ -46,7 +46,10 @@ F.samp <- rep(0,999)
 for(i in 1:999){
   F.samp[i] <- PermTest(bilirubin)
 }
-
+```
+From these, we compute the p-value as the probability to observe an F-statistic as extreme or more extreme than our original F-statistic, $\texttt{Fval}$, if there is no difference in the bilirubin levels of the individuals (i.e. if one can change the distribution of measurements between the individuals.)
+```{r}
 #  compute p-value for Fval using F.samp:
 p.val <- length(F.samp[F.samp>=Fval["value"]])/999; p.val
 ```
+The p-value is 0.044, so at a significance level 5$\%$ we reject the hypothesis that the bilirubin levels are the same for all individuals. 
