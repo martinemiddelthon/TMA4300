@@ -10,3 +10,45 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Problem C
+
+We have $x_i$ and $y_i$, $i=1,\ldots,n$, which are independent random variables. Furthermore, the $x_i$'s and $y_i$'s have an exponential distribution with parameter $\lambda_0$ and $\lambda_1$, respectively. Instead of observing these variables directly, we observe $z_i=\max(x_i,y_i)$ and $u_i=I(x_i\geq y_i)$ for $i=1,\ldots,n$.
+
+## 1.
+
+The joint distribution of the variables is
+
+$$
+  f(\mathbf{x}, \mathbf{y} \mid \lambda_0, \lambda_1) = \prod_{i=1}^n f(x_i\mid\lambda_0)\prod_{i=1}^n f(y_i\mid\lambda_1) = (\lambda_0\lambda_1)^n \prod_{i=1}^n e^{-\lambda_0x_i-\lambda_1y_i} \quad.
+$$
+
+We take the logarithm of this and get
+
+$$
+  \ln f(\mathbf{x}, \mathbf{y} \mid \lambda_0, \lambda_1) = n(\ln\lambda_0+\ln\lambda_1) -\lambda_0\sum_{i=1}^n x_i -\lambda_1\sum_{i=1}^n y_i \quad . 
+$$
+
+We are interested in the expectation $E(\ln f(\mathbf{x}, \mathbf{y} \mid \lambda_0, \lambda_1)\mid \mathbf{z}, \mathbf{u}, \lambda_0^{(t)}, \lambda_1^{(t)}) $, so we need to find $E(x_i\mid z_i,u_i,\lambda_0^{(t)},\lambda_1^{(t)})$ and $E(y_i\mid z_i,u_i,\lambda_0^{(t)},\lambda_1^{(t)})$.
+We begin by finding the distribution $f(x_i\mid z_i,u_i,\lambda_0^{(t)},\lambda_1^{(t)})$, and observe that we can divide it into two cases based on the observed $u_i$. We have
+
+$$
+\begin{aligned}
+  f(x_i\mid z_i,u_i,\lambda_0^{(t)},\lambda_1^{(t)}) &= \begin{cases} z_i, & u_i=1 \\ \frac{f(z_i\mid x_i)f(x_i)}{f(z_i)}, & u_i=0 \end{cases} \\
+  &= \begin{cases} z_i, & u_i=1 \\ \frac{\lambda_0^{(t)}\exp(-\lambda_0^{(t)}x_i)}{1-\exp(-\lambda_0^{(t)}z_i)}, & u_i=0 \end{cases} \quad.
+\end{aligned}
+$$
+
+Since $E(x)=\int xf(x)dx $, we get
+
+$$
+\begin{aligned}
+  E(x_i\mid z_i,u_i,\lambda_0^{(t)},\lambda_1^{(t)}) &= u_i z_i+ (1-u_i)\int_0^{z_i} x_i \frac{\lambda_0^{(t)}\exp(-\lambda_0^{(t)}x_i)}{1-\exp(-\lambda_0^{(t)}z_i)} dx_i \\
+  &= u_iz_i + (1-u_i) \bigg(\frac{1}{\lambda_0^{(t)}} - \frac{z_i}{\exp(\lambda_0^{(t)}z_i)-1} \bigg)
+\end{aligned}\quad,
+$$
+
+where we have used the method of integration by parts.
+
+
+
+
+
