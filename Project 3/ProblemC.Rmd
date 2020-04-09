@@ -111,9 +111,10 @@ Q = function(u, z, lambda0t, lambda1t) {
   return(expect)
 }
 
-EM = function(u, z, lambda0.init, lambda1.init, epsilon) {
-  lambda0 = c(lambda0.init)
-  lambda1 = c(lambda1.init)
+EM = function(u, z, lambda.init, epsilon) {
+  n = length(u)
+  lambda0 = c(lambda.init[1])
+  lambda1 = c(lambda.init[2])
   E.t = -Inf
   E.t1 = Q(u, z, lambda0[1], lambda1[1])
   t = 1
@@ -124,16 +125,30 @@ EM = function(u, z, lambda0.init, lambda1.init, epsilon) {
     E.t1 = Q(u, z, lambda0[t+1], lambda1[t+1])
     t = t + 1
   }
-  print(t)
   
-  plot((1:t), lambda0)
-  plot((1:t), lambda1)
+  plot((1:length(lambda0)), lambda0)
+  plot((1:length(lambda1)), lambda1)
   
-  return(c(lambda0[t], lambda1[t]))
+  return(c(lambda0[length(lambda0)], lambda1[length(lambda1)]))
+}
+
+EMfor = function(u, z, lambda.init, it) {
+  n = length(u)
+  lambda0 = c(lambda.init[1])
+  lambda1 = c(lambda.init[2])
+  for (t in (1:it)) {
+    lambda0 = c(lambda0, n/summ0(u,z,lambda0[t]))
+    lambda1 = c(lambda1, n/summ1(u,z,lambda1[t]))
+  }
+  
+  plot((1:length(lambda0)), lambda0)
+  plot((1:length(lambda1)), lambda1)
+  
+  return(c(lambda0[length(lambda0)], lambda1[length(lambda1)]))
 }
 
 
-result = EM(u, z, 2, 2, 0.00000001)
+result = EM(u, z, c(2, 2), 0.00000001)
 result
 ```
 
