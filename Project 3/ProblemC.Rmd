@@ -73,6 +73,67 @@ $$
   &= E\bigg(n(\ln\lambda_0+\ln\lambda_1) -\lambda_0\sum_{i=1}^n x_i -\lambda_1\sum_{i=1}^n y_i\bigg) \\
   &= n(\ln\lambda_0+\ln\lambda_1) -\lambda_0\sum_{i=1}^n E(x_i\mid z_i,u_i,\lambda_0^{(t)},\lambda_1^{(t)}) -\lambda_1\sum_{i=1}^n E(y_i\mid z_i,u_i,\lambda_0^{(t)},\lambda_1^{(t)}) \\
   &= n(\ln\lambda_0+\ln\lambda_1) -\lambda_0\sum_{i=1}^n \bigg\{u_iz_i + (1-u_i) \bigg(\frac{1}{\lambda_0^{(t)}} - \frac{z_i}{\exp(\lambda_0^{(t)}z_i)-1} \bigg)\bigg\} -\lambda_1\sum_{i=1}^n \bigg\{(1-u_i)z_i + u_i \bigg(\frac{1}{\lambda_1^{(t)}} - \frac{z_i}{\exp(\lambda_1^{(t)}z_i)-1}\bigg)\bigg\}
-\end{aligned}
+\end{aligned}\quad.
   
 $$
+
+
+## 2.
+
+```{r}
+
+u = read.delim("u.txt")
+z = read.delim("z.txt")
+u = u[[1]]
+z = z[[1]]
+
+summ0 = function(u, z, lambda0t) {
+  n = length(u)
+  summ0 = 0
+  for (i in (1:n)) {
+    summ0 = summ0 + u[i] * z[i] + (1-u[i]) * (1/lambda0t - z[i]/(exp(lambda0t*z[i])-1))
+  }
+  return(summ0)
+}
+
+summ1 = function(u, z, lambda1t) {
+  n = length(u)
+  summ1 = 0
+  for (i in (1:n)) {
+    summ1 = summ1 + (1-u[i]) * z[i] + u[i] * (1/lambda1t- z[i]/(exp(lambda1t*z[i])-1))
+  }
+  return(summ1)
+}
+
+Q = function(u, z, lambda0t, lambda1t) {
+  n = length(y)
+  expect = n * (log(lambda0t)+log(lambda1t)) - lambda0t * summ0(u,z,lambda0t) - lambda1t * summ1(u,z,lambda1t)
+  return(expect)
+}
+
+EM = function(u, z, lambda0.init, lambda1.init, epsilon) {
+  lambda0 = c(lambda0.init)
+  lambda1 = c(lambda1.init)
+  E.t = -Inf
+  E.t1 = Q(u, z, lambda0[1], lambda1[1])
+  t = 1
+  while (abs(E.t1 - E.t) > epsilon) {
+    lambda0 = c(lambda0, n/summ0(u,z,lambda0[t]))
+    lambda1 = c(lambda1, n/summ1(u,z,lambda1[t]))
+    E.t = E.t1
+    E.t1 = Q(u, z, lambda0[t+1], lambda1[t+1])
+    t = t + 1
+  }
+  print(t)
+  
+  plot((1:t), lambda0)
+  plot((1:t), lambda1)
+  
+  return(c(lambda0[t], lambda1[t]))
+}
+
+
+result = EM(u, z, 2, 2, 0.00000001)
+result
+```
+
