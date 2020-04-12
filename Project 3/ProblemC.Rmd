@@ -1,0 +1,178 @@
+---
+title: "ProblemC"
+author: "Martine Middelthon"
+date: "8 4 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Problem C
+
+We have $x_i$ and $y_i$, $i=1,\ldots,n$, which are independent random variables. Furthermore, the $x_i$'s and $y_i$'s have an exponential distribution with parameter $\lambda_0$ and $\lambda_1$, respectively. Instead of observing these variables directly, we observe $z_i=\max(x_i,y_i)$ and $u_i=I(x_i\geq y_i)$ for $i=1,\ldots,n$.
+
+## 1.
+
+The joint distribution of the variables is
+
+$$
+  f(\mathbf{x}, \mathbf{y} \mid \lambda_0, \lambda_1) = \prod_{i=1}^n f(x_i\mid\lambda_0)\prod_{i=1}^n f(y_i\mid\lambda_1) = (\lambda_0\lambda_1)^n \prod_{i=1}^n e^{-\lambda_0x_i-\lambda_1y_i} \quad.
+$$
+
+We take the logarithm of this and get
+
+$$
+  \ln f(\mathbf{x}, \mathbf{y} \mid \lambda_0, \lambda_1) = n(\ln\lambda_0+\ln\lambda_1) -\lambda_0\sum_{i=1}^n x_i -\lambda_1\sum_{i=1}^n y_i \quad . 
+$$
+
+We are interested in the expectation $E(\ln f(\mathbf{x}, \mathbf{y} \mid \lambda_0, \lambda_1)\mid \mathbf{z}, \mathbf{u}, \lambda_0^{(t)}, \lambda_1^{(t)}) $, so we need to find $E(x_i\mid z_i,u_i,\lambda_0^{(t)},\lambda_1^{(t)})$ and $E(y_i\mid z_i,u_i,\lambda_0^{(t)},\lambda_1^{(t)})$.
+We begin by finding the distribution $f(x_i\mid z_i,u_i,\lambda_0^{(t)},\lambda_1^{(t)})$, and observe that we can divide it into two cases based on the observed $u_i$. We have
+
+$$
+\begin{aligned}
+  f(x_i\mid z_i,u_i,\lambda_0^{(t)},\lambda_1^{(t)}) &= \begin{cases} z_i, & u_i=1 \\ \frac{f(z_i\mid x_i)f(x_i)}{f(z_i)}, & u_i=0 \end{cases} \\
+  &= \begin{cases} z_i, & u_i=1 \\ \frac{\lambda_0^{(t)}\exp(-\lambda_0^{(t)}x_i)}{1-\exp(-\lambda_0^{(t)}z_i)}, & u_i=0 \end{cases} \quad.
+\end{aligned}
+$$
+
+Since $E(x)=\int xf(x)dx $, we get
+
+$$
+\begin{aligned}
+  E(x_i\mid z_i,u_i,\lambda_0^{(t)},\lambda_1^{(t)}) &= u_i z_i+ (1-u_i)\int_0^{z_i} x_i \frac{\lambda_0^{(t)}\exp(-\lambda_0^{(t)}x_i)}{1-\exp(-\lambda_0^{(t)}z_i)} dx_i \\
+  &= u_iz_i + (1-u_i) \bigg(\frac{1}{\lambda_0^{(t)}} - \frac{z_i}{\exp(\lambda_0^{(t)}z_i)-1} \bigg)
+\end{aligned}\quad,
+$$
+
+where we have used the method of integration by parts.
+We follow the same procedure in order to find $E(y_i\mid z_i,u_i,\lambda_0^{(t)},\lambda_1^{(t)})$. We find the distribution
+
+$$
+  \begin{aligned}
+  f(y_i\mid z_i,u_i,\lambda_0^{(t)},\lambda_1^{(t)}) &= \begin{cases} z_i, & u_i=0 \\ \frac{f(z_i\mid y_i)f(y_i)}{f(z_i)}, & u_i=1 \end{cases} \\
+  &= \begin{cases} z_i, & u_i=0 \\ \frac{\lambda_1^{(t)}\exp(-\lambda_1^{(t)}y_i)}{1-\exp(-\lambda_1^{(t)}z_i)}, & u_i=1 \end{cases} \quad.
+\end{aligned} \quad.
+$$
+
+Then we find the expectation
+
+$$
+\begin{aligned}
+  E(y_i\mid z_i,u_i,\lambda_0^{(t)},\lambda_1^{(t)}) &= (1-u_i) z_i+ u_i\int_0^{z_i} y_i \frac{\lambda_1^{(t)}\exp(-\lambda_1^{(t)}y_i)}{1-\exp(-\lambda_1^{(t)}z_i)} dy_i \\
+  &= (1-u_i)z_i + u_i \bigg(\frac{1}{\lambda_1^{(t)}} - \frac{z_i}{\exp(\lambda_1^{(t)}z_i)-1} \bigg)
+\end{aligned}\quad.
+$$
+
+Thus we get
+
+$$
+\begin{aligned}
+  E(\ln f(\mathbf{x}, \mathbf{y} \mid \lambda_0, \lambda_1)\mid \mathbf{z}, \mathbf{u}, \lambda_0^{(t)}, \lambda_1^{(t)})
+  &= E\bigg(n(\ln\lambda_0+\ln\lambda_1) -\lambda_0\sum_{i=1}^n x_i -\lambda_1\sum_{i=1}^n y_i\bigg) \\
+  &= n(\ln\lambda_0+\ln\lambda_1) -\lambda_0\sum_{i=1}^n E(x_i\mid z_i,u_i,\lambda_0^{(t)},\lambda_1^{(t)}) -\lambda_1\sum_{i=1}^n E(y_i\mid z_i,u_i,\lambda_0^{(t)},\lambda_1^{(t)}) \\
+  &= n(\ln\lambda_0+\ln\lambda_1) -\lambda_0\sum_{i=1}^n \bigg\{u_iz_i + (1-u_i) \bigg(\frac{1}{\lambda_0^{(t)}} - \frac{z_i}{\exp(\lambda_0^{(t)}z_i)-1} \bigg)\bigg\} -\lambda_1\sum_{i=1}^n \bigg\{(1-u_i)z_i + u_i \bigg(\frac{1}{\lambda_1^{(t)}} - \frac{z_i}{\exp(\lambda_1^{(t)}z_i)-1}\bigg)\bigg\}
+\end{aligned}\quad.
+  
+$$
+
+
+## 2.
+
+We want to use the EM algorithm to find the maximum likelihood estimates of $\lambda_0$ and $\lambda_1$. We denote $Q(\lambda_0,\lambda_1\mid\lambda_0^{(t)},\lambda_1^{(t)}) = E(\ln f(\mathbf{x}, \mathbf{y} \mid \lambda_0, \lambda_1)\mid \mathbf{z}, \mathbf{u}, \lambda_0^{(t)}, \lambda_1^{(t)})$ and want to maximize $Q$ with respect to $\lambda_0$ and $\lambda_1$. We calculate
+
+$$
+  \frac{\partial Q}{\partial\lambda_0} = \frac{n}{\lambda_0} - \sum_{i=1}^n \bigg\{u_iz_i + (1-u_i) \bigg(\frac{1}{\lambda_0^{(t)}} - \frac{z_i}{\exp(\lambda_0^{(t)}z_i)-1} \bigg)\bigg\} = 0 \\
+  \implies \lambda_0 = \frac{n}{\sum_{i=1}^n \bigg\{u_iz_i + (1-u_i) \bigg(\frac{1}{\lambda_0^{(t)}} - \frac{z_i}{\exp(\lambda_0^{(t)}z_i)-1} \bigg)\bigg\}}
+$$
+and
+
+$$
+  \frac{\partial Q}{\partial\lambda_1} = \frac{n}{\lambda_1} - \sum_{i=1}^n \bigg\{(1-u_i)z_i + u_i \bigg(\frac{1}{\lambda_1^{(t)}} - \frac{z_i}{\exp(\lambda_1^{(t)}z_i)-1}\bigg)\bigg\} =0 \\
+  \implies \lambda_1 = \frac{n}{\sum_{i=1}^n \bigg\{(1-u_i)z_i + u_i \bigg(\frac{1}{\lambda_1^{(t)}} - \frac{z_i}{\exp(\lambda_1^{(t)}z_i)-1}\bigg)\bigg\}}.
+$$
+
+Hence we use the recursions
+
+$$
+  \lambda_0^{(t+1)} = \frac{n}{\sum_{i=1}^n \bigg\{u_iz_i + (1-u_i) \bigg(\frac{1}{\lambda_0^{(t)}} - \frac{z_i}{\exp(\lambda_0^{(t)}z_i)-1} \bigg)\bigg\}} \\
+  \lambda_1^{(t+1)} = \frac{n}{\sum_{i=1}^n \bigg\{(1-u_i)z_i + u_i \bigg(\frac{1}{\lambda_1^{(t)}} - \frac{z_i}{\exp(\lambda_1^{(t)}z_i)-1}\bigg)\bigg\}}.
+$$
+
+In the algorithm below we terminate the recursion when $|Q^{(t+1)}-Q^{(t)}|\leq \epsilon$. Setting $\epsilon=10^{-8}$ and initial values $(\lambda_0,\lambda_1)_0=(2,2)$, we get the maximum likelihood estimates $(\lambda_0,\lambda_1)_{MLE}=(3.46,9.33)$.
+
+```{r}
+# Load data
+u = read.delim("u.txt")
+z = read.delim("z.txt")
+u = u[[1]]
+z = z[[1]]
+
+# Function to calculate the sums in the expressions above
+summs = function(u, z, lambda0t, lambda1t) {
+  n = length(u)
+  summ0 = 0
+  summ1 = 0
+  for (i in (1:n)) {
+    summ0 = summ0 + u[i] * z[i] + (1-u[i]) * (1/lambda0t - z[i]/(exp(lambda0t*z[i])-1))
+    summ1 = summ1 + (1-u[i]) * z[i] + u[i] * (1/lambda1t- z[i]/(exp(lambda1t*z[i])-1))
+  }
+  return(c(summ0,summ1))
+}
+
+# Function fo calculate Q
+Q = function(u, z, lambda0t, lambda1t) {
+  n = length(y)
+  zums = summs(u,z,lambda0t, lambda1t)
+  expect = n * (log(lambda0t)+log(lambda1t)) - lambda0t * zums[1] - lambda1t * zums[2]
+  return(expect)
+}
+
+# EM algorithm for the problem
+# returns the maximum likelihood estimators for a given threshold epsilon
+# produces convergence plots
+EM = function(u, z, lambda.init, epsilon) {
+  n = length(u)
+  lambda0 = c(lambda.init[1]) # Create vector and set the first value
+  lambda1 = c(lambda.init[2]) # Create vector and set the first value
+  # To initiate the while loop
+  Q.t = -Inf
+  Q.t1 = Q(u, z, lambda0[1], lambda1[1])
+  t = 1
+  while (abs(Q.t1 - Q.t) > epsilon) {           # Terminate if abs(Q^{t+1}-Q^{t} <= epsilon)
+    zums = summs(u, z, lambda0[t], lambda1[t])
+    lambda0 = c(lambda0, n/zums[1])
+    lambda1 = c(lambda1, n/zums[2])
+    Q.t = Q.t1
+    Q.t1 = Q(u, z, lambda0[t+1], lambda1[t+1])
+    t = t + 1
+  }
+  
+  plot((1:length(lambda0)), lambda0, xlab = "t", ylab = bquote(lambda[0]), main = bquote("Convergence for"~lambda[0]))  # Convergence plot
+  plot((1:length(lambda1)), lambda1, xlab = "t", ylab = bquote(lambda[1]), main = bquote("Convergence for"~lambda[1]))  # COnvergence plot
+  
+  return(c(lambda0[length(lambda0)], lambda1[length(lambda1)]))
+}
+
+#EMfor = function(u, z, lambda.init, it) {
+#  n = length(u)
+#  lambda0 = c(lambda.init[1])
+#  lambda1 = c(lambda.init[2])
+#  for (t in (1:it)) {
+#     zums = summs(u, z, lambda0[t], lambda1[t])
+#    lambda0 = c(lambda0, n/zums[1])
+#    lambda1 = c(lambda1, n/zums[2])
+#  }
+  
+#  plot((1:length(lambda0)), lambda0)
+#  plot((1:length(lambda1)), lambda1)
+  
+#  return(c(lambda0[length(lambda0)], lambda1[length(lambda1)]))
+#}
+
+
+result = EM(u, z, c(2, 2), 0.00000001)
+result
+```
+

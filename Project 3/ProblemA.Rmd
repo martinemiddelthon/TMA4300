@@ -25,13 +25,6 @@ set.seed(1)                   # For reproducibility
 x = data3A$x                  # Time series data
 betas = ARp.beta.est(x, 2)    # Estimated LS and LA coefficients
 
-#e = ARp.resid(x, betas[[1]])
-#length(e)
-#x0 = c(x[4], x[5])
-#x0 = rev(x0) # Revert the sequence
-#x.bootstrap = ARp.filter(x0, betas[[1]], e)
-#length(x.bootstrap)
-#x.bootstrap
 
 # Function to produce B bootstrap samples of the LS and LA coefficients
 # Using the method of bootstrapping residuals
@@ -102,8 +95,8 @@ predictionInterval = function(x, betas, B=1500) {
   resids.est.LS = ARp.resid(x, betaLS)
   resids.est.LA = ARp.resid(x, betaLA)
   
-  boot.e101.LS = c()
-  boot.e101.LA = c()
+  x101.LS = rep(0, B)
+  x101.LA = rep(0, B)
   
   # Create bootstrap samples
   for (i in (1:B)) {
@@ -120,17 +113,20 @@ predictionInterval = function(x, betas, B=1500) {
     # Estimate coefficients based on the sequence
     betasLS = ARp.beta.est(x.bootstrap.LS, 2)[[1]]
     betasLA = ARp.beta.est(x.bootstrap.LA, 2)[[2]]
-    # Store the corresponding residuals
-    boot.e101.LS = c(boot.e101.LS, ARp.resid(x.bootstrap.LS, betasLS))
-    boot.e101.LA = c(boot.e101.LA, ARp.resid(x.bootstrap.LA, betasLA))
+    # Corresponding residuals
+    boot.e101.LS = ARp.resid(x.bootstrap.LS, betasLS)
+    boot.e101.LA = ARp.resid(x.bootstrap.LA, betasLA)
+    # Pick random residual
+    random = sample(1:length(boot.e101.LS),1)
+    e101.LS = boot.e101.LS[random]
+    e101.LA = boot.e101.LA[random]
+    # Calculate x101 value
+    x101.LS[i] = betasLS[1] * x[T] + betasLS[2] * x[T-1] + e101.LS
+    x101.LA[i] = betasLA[1] * x[T] + betasLA[2] * x[T-1] + e101.LA
   }
   
-  # Compute values for x101
-  x101.LS = betaLS[1] * x[T] + betaLS[2] * x[T-1] + boot.e101.LS
-  x101.LA = betaLA[1] * x[T] + betaLA[2] * x[T-1] + boot.e101.LA
-  
-  truehist(x101.LS)
-  truehist(x101.LA)
+  #truehist(x101.LS)
+  #truehist(x101.LA)
   
   # Estimate quantiles
   quantilesLS = quantile(x101.LS, c(0.025, 0.975))
