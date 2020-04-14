@@ -98,7 +98,7 @@ cat("\n\nBias of LS estimator:", betaLS.bias)
 cat("\nBias of LA estimator:", betaLA.bias)
 ```
 
-### OPTIMAL?
+We find that the LA estimator has both lower variance and is less biased than the LS estimator. Hence, for this non-Gaussian problem, the LS estimator is not optimal.
 
 ## 2.
 
@@ -142,9 +142,6 @@ predictionInterval = function(x, betas, B=1500) {
     x101.LS[i] = betasLS[1] * x[T] + betasLS[2] * x[T-1] + e101.LS
     x101.LA[i] = betasLA[1] * x[T] + betasLA[2] * x[T-1] + e101.LA
   }
-  
-  #truehist(x101.LS)
-  #truehist(x101.LA)
   
   # Estimate quantiles
   quantilesLS = quantile(x101.LS, c(0.025, 0.975))
