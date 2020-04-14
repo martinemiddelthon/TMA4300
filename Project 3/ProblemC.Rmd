@@ -123,7 +123,8 @@ summs = function(u, z, lambda0t, lambda1t) {
 
 # Function fo calculate Q
 Q = function(u, z, lambda0t, lambda1t) {
-  n = length(y)
+  #n = length(y)
+  n = length(u)   # DEBUG 
   zums = summs(u,z,lambda0t, lambda1t)
   expect = n * (log(lambda0t)+log(lambda1t)) - lambda0t * zums[1] - lambda1t * zums[2]
   return(expect)
@@ -132,7 +133,7 @@ Q = function(u, z, lambda0t, lambda1t) {
 # EM algorithm for the problem
 # returns the maximum likelihood estimators for a given threshold epsilon
 # produces convergence plots
-EM = function(u, z, lambda.init, epsilon) {
+EM = function(u, z, lambda.init, epsilon, plot=TRUE) {
   n = length(u)
   lambda0 = c(lambda.init[1]) # Create vector and set the first value
   lambda1 = c(lambda.init[2]) # Create vector and set the first value
@@ -148,9 +149,10 @@ EM = function(u, z, lambda.init, epsilon) {
     Q.t1 = Q(u, z, lambda0[t+1], lambda1[t+1])
     t = t + 1
   }
-  
-  plot((1:length(lambda0)), lambda0, xlab = "t", ylab = bquote(lambda[0]), main = bquote("Convergence for"~lambda[0]))  # Convergence plot
-  plot((1:length(lambda1)), lambda1, xlab = "t", ylab = bquote(lambda[1]), main = bquote("Convergence for"~lambda[1]))  # COnvergence plot
+  if(plot){
+    plot((1:length(lambda0)), lambda0, xlab = "t", ylab = bquote(lambda[0]), main = bquote("Convergence for"~lambda[0]))  # Convergence plot
+    plot((1:length(lambda1)), lambda1, xlab = "t", ylab = bquote(lambda[1]), main = bquote("Convergence for"~lambda[1]))  # COnvergence plot
+  }
   
   return(c(lambda0[length(lambda0)], lambda1[length(lambda1)]))
 }
@@ -175,4 +177,36 @@ EM = function(u, z, lambda.init, epsilon) {
 result = EM(u, z, c(2, 2), 0.00000001)
 result
 ```
+Bootstrap for finding standard deviation and correlation of $\lambda_0$ and $\lambda_1$: [SKRIV INN BEDRE]
 
+```{r}
+u = read.delim("u.txt")
+z = read.delim("z.txt")
+u = u[[1]]
+z = z[[1]]
+
+# Create B bootstrap samples: 
+B = 1000
+u.boot <- matrix(0L, nrow=B, ncol=length(u))
+z.boot <- matrix(0L, nrow=B, ncol=length(u))
+
+for(b in 1:B){
+  u.boot[b,] <- sample(u, length(u), replace=TRUE)
+  z.boot[b,] <- sample(z, length(z), replace=TRUE)
+}
+
+# Evaluate corresponding parameter estimates:
+lambda0.boot <- rep(0,B)
+lambda1.boot <- rep(0,B)
+
+for(b in 1:B){
+  lambs <- EM(u.boot[b,], z.boot[b,], c(2,2),0.00000001, plot=FALSE)
+  lambda0.boot[b] <- lambs[1]
+  lambda1.boot[b] <- lambs[2]
+}
+
+# estimate sd and corr:
+lambda0.sd <- sd(lambda0.boot); lambda0.sd
+lambda1.sd <- sd(lambda1.boot); lambda1.sd
+lambda.corr <- cor(lambda0.boot, lambda1.boot); lambda.corr
+```
