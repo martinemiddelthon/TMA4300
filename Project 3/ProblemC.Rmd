@@ -249,3 +249,15 @@ $$
 $$
 4. \quad \text{ Estimate }Corr[\hat{\lambda_0}, \hat{\lambda_1}] \text{ by }
 $$
+
+$$
+Corr[\hat{\lambda_0}, \hat{\lambda_1}] = \frac{Cov(\hat{\lambda_0}, \hat{\lambda_1})}{Var(\hat{\lambda_0})Var(\hat{\lambda_1})},\\
+\text{where}
+$$
+$$
+Cov(\hat{\lambda_0},\hat{\lambda_1}) = \frac{\sum_{b=1}^B(\hat{\lambda_0}^{*(b)} - \hat{\lambda_0}^{*(\cdot)})(\hat{\lambda_1}^{*(b)} - \hat{\lambda_1}^{*(\cdot)})}{N-1}\\
+\text{and}
+$$
+$$
+Var(\hat{\lambda_0}) = SD(\hat{\lambda_0})^2;\;Var(\hat{\lambda_1}) = SD(\hat{\lambda_1})^2.
+$$
