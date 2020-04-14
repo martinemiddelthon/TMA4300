@@ -177,7 +177,10 @@ EM = function(u, z, lambda.init, epsilon, plot=TRUE) {
 result = EM(u, z, c(2, 2), 0.00000001)
 result
 ```
-Bootstrap for finding standard deviation and correlation of $\lambda_0$ and $\lambda_1$: [SKRIV INN BEDRE]
+The bootstrap method is used to find $SD(\hat{\lambda}_0), SD(\hat{\lambda}_1)$ and $Corr[\hat{\lambda}_0,\hat{\lambda}_1].$ We get the results 
+$$
+SD(\hat{\lambda}_0) = 0.26,\; SD(\hat{\lambda}_1) = 0.81,\;Corr[\hat{\lambda}_0,\hat{\lambda}_1] = 0.06. 
+$$
 
 ```{r}
 u = read.delim("u.txt")
@@ -190,9 +193,15 @@ B = 1000
 u.boot <- matrix(0L, nrow=B, ncol=length(u))
 z.boot <- matrix(0L, nrow=B, ncol=length(u))
 
+# for(b in 1:B){
+#   u.boot[b,] <- sample(u, length(u), replace=TRUE)
+#   z.boot[b,] <- sample(z, length(z), replace=TRUE)
+# }
+
 for(b in 1:B){
-  u.boot[b,] <- sample(u, length(u), replace=TRUE)
-  z.boot[b,] <- sample(z, length(z), replace=TRUE)
+  idx <- sample(seq(1:length(u)), length(u), replace=TRUE)
+  u.boot[b,] <- u[idx]
+  z.boot[b,] <- z[idx]
 }
 
 # Evaluate corresponding parameter estimates:
@@ -209,4 +218,34 @@ for(b in 1:B){
 lambda0.sd <- sd(lambda0.boot); lambda0.sd
 lambda1.sd <- sd(lambda1.boot); lambda1.sd
 lambda.corr <- cor(lambda0.boot, lambda1.boot); lambda.corr
+cat(c(lambda0.sd, lambda1.sd, lambda.corr))
 ```
+The pseudocode for the bootstrap method for obtaining $SD(\hat{\lambda}_0), SD(\hat{\lambda}_1)$ and $Corr[\hat{\lambda}_0,\hat{\lambda}_1]$ is shown below. 
+$$
+1. \quad \text{Generate B bootstrap samples of pairs of u and z;}
+$$
+$$
+(u,z)^{*(1)},\ldots,(u,z)^{*(B)},
+$$
+$$
+\text{by sampling from $u$ and $z$ with replacement.}
+$$
+$$
+2. \quad \text{Evaluate the corresponding parameter estimates}\\
+\text{by using the EM-function with } (u,z)^{*(b)} \text{ as input parameters:}
+$$
+$$
+\hat{\lambda_0}^{*(1)},\ldots,\hat{\lambda_0}^{*(B)},\hat{\lambda_1}^{*(1)},\ldots, \hat{\lambda_1}^{*(B)}.
+$$
+$$
+3. \quad \text{Estimate the standard deviation of }\hat{\lambda_0} \text{ and } \hat{\lambda_1} \text{ by:}
+$$
+$$
+\hat{SE}_B = \sqrt{\frac{\sum_{b=1}^B(\hat{\lambda}^{*(b)} - \hat{\lambda}^{*(\cdot)})^2}{B-1}},
+$$
+$$
+\text{where } \hat{\lambda}^{*(\cdot)} = \frac{1}{B}\sum_{b=1}^B\hat{\lambda}^{*(b)}.
+$$
+$$
+4. \quad \text{ Estimate }Corr[\hat{\lambda_0}, \hat{\lambda_1}] \text{ by }
+$$
