@@ -317,7 +317,10 @@ log.lik <- function(par, u, z){
   u.1.idx <- which(u==1)
   result <- sum(log(par[2]*exp(-par[2]*z[u.0.idx])*(1 - exp(-par[1]*z[u.0.idx]))))
   result <- result + sum(log(par[1]*exp(-par[1]*z[u.1.idx])*(1 - exp(-par[2]*z[u.1.idx]))))
-  return(result)
+  return(-result)
 }
 
+mle <- optim(par=c(2,2), fn=log.lik, u=u, z=z)
+mle
 ```
+We get maximum likelihood estimators of $\hat{\lambda_0} = 3.46$ and $\hat{\lambda_1} = 9.33$, which are very close to the values we got for the estimators of $\lambda_0$ and $\lambda_1$ using the EM-method. 
