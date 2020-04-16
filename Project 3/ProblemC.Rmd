@@ -157,30 +157,13 @@ EM = function(u, z, lambda.init, epsilon, plot=TRUE) {
   return(c(lambda0[length(lambda0)], lambda1[length(lambda1)]))
 }
 
-#EMfor = function(u, z, lambda.init, it) {
-#  n = length(u)
-#  lambda0 = c(lambda.init[1])
-#  lambda1 = c(lambda.init[2])
-#  for (t in (1:it)) {
-#     zums = summs(u, z, lambda0[t], lambda1[t])
-#    lambda0 = c(lambda0, n/zums[1])
-#    lambda1 = c(lambda1, n/zums[2])
-#  }
-  
-#  plot((1:length(lambda0)), lambda0)
-#  plot((1:length(lambda1)), lambda1)
-  
-#  return(c(lambda0[length(lambda0)], lambda1[length(lambda1)]))
-#}
-
-
 result = EM(u, z, c(2, 2), 0.00000001)
 result
 ```
-The bootstrap method is used to find $SD(\hat{\lambda}_0), SD(\hat{\lambda}_1)$ and $Corr[\hat{\lambda}_0,\hat{\lambda}_1].$ We get the results 
-$$
-SD(\hat{\lambda}_0) = 0.26,\; SD(\hat{\lambda}_1) = 0.81,\;Corr[\hat{\lambda}_0,\hat{\lambda}_1] = 0.06. 
-$$
+
+The convergence plots show that the EM-algorithm converges rather quickly for both $\hat{\lambda_0}$ and $\hat{\lambda_1}.$
+## 3
+The bootstrap method is used to find $\hat{SD}(\hat{\lambda}_0), \hat{SD}(\hat{\lambda}_1), \hat{\text{bias}}_{\hat{\lambda_0}}, \hat{\text{bias}}_{\hat{\lambda_1}} $ and $\hat{Corr}[\hat{\lambda}_0,\hat{\lambda}_1].$
 
 ```{r}
 u = read.delim("u.txt")
@@ -193,11 +176,7 @@ B = 1000
 u.boot <- matrix(0L, nrow=B, ncol=length(u))
 z.boot <- matrix(0L, nrow=B, ncol=length(u))
 
-# for(b in 1:B){
-#   u.boot[b,] <- sample(u, length(u), replace=TRUE)
-#   z.boot[b,] <- sample(z, length(z), replace=TRUE)
-# }
-
+# bootstrapping
 for(b in 1:B){
   idx <- sample(seq(1:length(u)), length(u), replace=TRUE)
   u.boot[b,] <- u[idx]
@@ -239,7 +218,7 @@ stats <- function(l0.boot, l1.boot, results){
 
 stats(lambda0.boot, lambda1.boot, result)
 ```
-We get $\hat{SD}(\hat{\lambda_0}) = 0.26, \hat{SD}(\hat{\lambda_1})=0.81, \hat{\text{bias}}_{\hat{\lambda_0}}=0.02, \hat{\text{bias}}_{\hat{\lambda_1}} = 0.03$ and $\hat{Corr}(\hat{\lambda_0},\hat{\lambda_1}) = 0.27.$ We observe that both the standard deviation and the bias are significant. However, the bias does still have a quite low value, and since the standard deviation for both $\hat{\lambda_0}$ and $\lambda_1$ are significantly higher, we will prefer the maxinmum likelihood estimator to the bias corrected estimates for $\lambda_0$ and $\lambda_1.$ This is because the variance of the bias-corrected estimate in general is higher than for the mle, and we would then trade a rather small bias reduction for a potentially larger increase in variance.  
+The histogram shows the distribution of the bootstrapped values for $\hat{\lambda_0}^{*}$ and $\hat{\lambda_0}^*.$ We get the results $\hat{SD}(\hat{\lambda_0}) = 0.26, \hat{SD}(\hat{\lambda_1})=0.81, \hat{\text{bias}}_{\hat{\lambda_0}}=0.02, \hat{\text{bias}}_{\hat{\lambda_1}} = 0.03$ and $\hat{Corr}(\hat{\lambda_0},\hat{\lambda_1}) = 0.27.$ We observe that both the standard deviation and the bias are significant. However, the bias does still have a quite low value, and since the standard deviation for both $\hat{\lambda_0}$ and $\lambda_1$ are significantly higher, we will prefer the maxinmum likelihood estimator to the bias corrected estimates for $\lambda_0$ and $\lambda_1.$ This is because the variance of the bias-corrected estimate in general is higher than for the mle, and we would then trade a rather small bias reduction for a potentially larger increase in variance.  
 The pseudocode for the bootstrap method for obtaining $SD(\hat{\lambda}_0), SD(\hat{\lambda}_1)$ and $Corr[\hat{\lambda}_0,\hat{\lambda}_1]$ is shown below. 
 $$
 1. \quad \text{Generate B bootstrap samples of pairs of u and z;}
@@ -281,8 +260,6 @@ $$
 $$
 Var(\hat{\lambda_0}) = SD(\hat{\lambda_0})^2;\;Var(\hat{\lambda_1}) = SD(\hat{\lambda_1})^2.
 $$
-
-TODO: Implementer bias og diskuter om du foretrekker bias-corrected eller ikke. 
 
 ## 4.
 We will now try to estimate $\lambda_0$ and $\lambda_1$ by the maximum likelihood estimator instead. To find the likelihood of $\lambda_0$ and $\lambda_1$, and from this, their maximum likelihood estimates, we first need to find
