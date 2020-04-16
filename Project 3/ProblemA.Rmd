@@ -11,14 +11,32 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Problem A
 
+Our data consists of the non-Gaussian time series of length $T=100$ plotted below.
+
 ```{r}
 # Load data and functions
 helpR = source("probAhelp.R")
 dataR = source("probAdata.R")
-#plot(1:100, data3A$x)
+plot(1:100, data3A$x, xlab = "t", ylab = "x")
 ```
 
+We consider the AR(2) model
+
+$$
+  x_t = \beta_1 x_{t-1} + \beta_2 x_{t-2} + e_t,
+$$
+
+where $e_t$ are independent and identically distributed random variables with zero mean and constant variance. We find the two estimators $\hat{\boldsymbol\beta}_{LS}$ and $\hat{\boldsymbol\beta}_{LA}$ by respectively minimizing $Q_{LS}$ and $Q_{LA}$, where
+
+$$
+  Q_{LS}(\mathbf{x}) = \sum_{t=3}^T (x_t - \beta_1 x_{t-1} - \beta_2 x_{t-2})^2 \\
+  Q_{LA}(\mathbf{x}) = \sum_{t=3}^T |x_t - \beta_1 x_{t-1} - \beta_2 x_{t-2}| .
+$$
+
+
 ## 1.
+
+We use the residual sampling bootstrap method to estimate the variance and bias of the estimators.
 
 ```{r}
 set.seed(1)                   # For reproducibility
@@ -67,8 +85,8 @@ betas.boot = bootstrap.betas(x, betas, 1500)  # Bootstrapped LS and LA coefficie
 betaLS.var = c(var(betas.boot[1,]), var(betas.boot[2,]))    # ( var(beta_{LS,1}), var(beta_{LS,2}) )
 betaLA.var = c(var(betas.boot[3,]), var(betas.boot[4,]))    # ( var(beta_{LA,1}), var(beta_{LA,2}) )
 
-betaLS.var
-betaLA.var
+cat("Variance of LS estimator:", betaLS.var)
+cat("\nVariance of LA estimator:", betaLA.var)
 
 betaLS.mean = c(mean(betas.boot[1,]), mean(betas.boot[2,]))   # ( mean(beta_{LS,1}), mean(beta_{LS,2}) )
 betaLA.mean = c(mean(betas.boot[3,]), mean(betas.boot[4,]))   # ( mean(beta_{LA,1}), mean(beta_{LA,2}) )
@@ -76,11 +94,11 @@ betaLA.mean = c(mean(betas.boot[3,]), mean(betas.boot[4,]))   # ( mean(beta_{LA,
 betaLS.bias = betaLS.mean - betas[[1]]    # ( bias(beta_{LS,1}), bias(beta_{LS,2}) )
 betaLA.bias = betaLA.mean - betas[[2]]    # ( bias(beta_{LA,1}), bias(beta_{LA,2}) )
 
-betaLS.bias
-betaLA.bias
+cat("\n\nBias of LS estimator:", betaLS.bias)
+cat("\nBias of LA estimator:", betaLA.bias)
 ```
 
-### OPTIMAL?
+We find that the LA estimator has both lower variance and is less biased than the LS estimator. Hence, for this non-Gaussian problem, the LS estimator is not optimal.
 
 ## 2.
 
@@ -125,9 +143,6 @@ predictionInterval = function(x, betas, B=1500) {
     x101.LA[i] = betasLA[1] * x[T] + betasLA[2] * x[T-1] + e101.LA
   }
   
-  #truehist(x101.LS)
-  #truehist(x101.LA)
-  
   # Estimate quantiles
   quantilesLS = quantile(x101.LS, c(0.025, 0.975))
   quantilesLA = quantile(x101.LA, c(0.025, 0.975))
@@ -140,5 +155,6 @@ result
 
 ```
 
+We obtain the 95\% prediction intervals $(7.04,23.28)$ and $(7.68,20.80)$ for $x_{101}$ based on the LS and LA estimators, respectively. We observe that the latter interval is narrower.
 
 

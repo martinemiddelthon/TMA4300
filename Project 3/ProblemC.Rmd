@@ -123,7 +123,8 @@ summs = function(u, z, lambda0t, lambda1t) {
 
 # Function fo calculate Q
 Q = function(u, z, lambda0t, lambda1t) {
-  n = length(y)
+  #n = length(y)
+  n = length(u)   # DEBUG 
   zums = summs(u,z,lambda0t, lambda1t)
   expect = n * (log(lambda0t)+log(lambda1t)) - lambda0t * zums[1] - lambda1t * zums[2]
   return(expect)
@@ -132,7 +133,7 @@ Q = function(u, z, lambda0t, lambda1t) {
 # EM algorithm for the problem
 # returns the maximum likelihood estimators for a given threshold epsilon
 # produces convergence plots
-EM = function(u, z, lambda.init, epsilon) {
+EM = function(u, z, lambda.init, epsilon, plot=TRUE) {
   n = length(u)
   lambda0 = c(lambda.init[1]) # Create vector and set the first value
   lambda1 = c(lambda.init[2]) # Create vector and set the first value
@@ -148,31 +149,175 @@ EM = function(u, z, lambda.init, epsilon) {
     Q.t1 = Q(u, z, lambda0[t+1], lambda1[t+1])
     t = t + 1
   }
-  
-  plot((1:length(lambda0)), lambda0, xlab = "t", ylab = bquote(lambda[0]), main = bquote("Convergence for"~lambda[0]))  # Convergence plot
-  plot((1:length(lambda1)), lambda1, xlab = "t", ylab = bquote(lambda[1]), main = bquote("Convergence for"~lambda[1]))  # COnvergence plot
+  if(plot){
+    plot((1:length(lambda0)), lambda0, xlab = "t", ylab = bquote(lambda[0]), main = bquote("Convergence for"~lambda[0]))  # Convergence plot
+    plot((1:length(lambda1)), lambda1, xlab = "t", ylab = bquote(lambda[1]), main = bquote("Convergence for"~lambda[1]))  # COnvergence plot
+  }
   
   return(c(lambda0[length(lambda0)], lambda1[length(lambda1)]))
 }
-
-#EMfor = function(u, z, lambda.init, it) {
-#  n = length(u)
-#  lambda0 = c(lambda.init[1])
-#  lambda1 = c(lambda.init[2])
-#  for (t in (1:it)) {
-#     zums = summs(u, z, lambda0[t], lambda1[t])
-#    lambda0 = c(lambda0, n/zums[1])
-#    lambda1 = c(lambda1, n/zums[2])
-#  }
-  
-#  plot((1:length(lambda0)), lambda0)
-#  plot((1:length(lambda1)), lambda1)
-  
-#  return(c(lambda0[length(lambda0)], lambda1[length(lambda1)]))
-#}
-
 
 result = EM(u, z, c(2, 2), 0.00000001)
 result
 ```
 
+The convergence plots show that the EM-algorithm converges rather quickly for both $\hat{\lambda_0}$ and $\hat{\lambda_1}.$
+## 3
+The bootstrap method is used to find $\hat{SD}(\hat{\lambda}_0), \hat{SD}(\hat{\lambda}_1), \hat{\text{bias}}_{\hat{\lambda_0}}, \hat{\text{bias}}_{\hat{\lambda_1}} $ and $\hat{Corr}[\hat{\lambda}_0,\hat{\lambda}_1].$
+
+```{r}
+u = read.delim("u.txt")
+z = read.delim("z.txt")
+u = u[[1]]
+z = z[[1]]
+
+# Create B bootstrap samples: 
+B = 1000
+u.boot <- matrix(0L, nrow=B, ncol=length(u))
+z.boot <- matrix(0L, nrow=B, ncol=length(u))
+
+# bootstrapping
+for(b in 1:B){
+  idx <- sample(seq(1:length(u)), length(u), replace=TRUE)
+  u.boot[b,] <- u[idx]
+  z.boot[b,] <- z[idx]
+}
+
+# Evaluate corresponding parameter estimates:
+lambda0.boot <- rep(0,B)
+lambda1.boot <- rep(0,B)
+
+for(b in 1:B){
+  lambs <- EM(u.boot[b,], z.boot[b,], c(2,2),0.00000001, plot=FALSE)
+  lambda0.boot[b] <- lambs[1]
+  lambda1.boot[b] <- lambs[2]
+}
+
+# histograms of bootstrap samples of estimators
+hist(lambda0.boot)
+hist(lambda1.boot)
+
+# estimate sd and corr:
+lambda0.sd <- sd(lambda0.boot); lambda0.sd
+lambda1.sd <- sd(lambda1.boot); lambda1.sd
+lambda.corr <- cor(lambda0.boot, lambda1.boot); lambda.corr
+cat(c(lambda0.sd, lambda1.sd, lambda.corr))
+
+stats <- function(l0.boot, l1.boot, results){
+  B <- length(l0.boot)
+  l0.dot <- mean(l0.boot)
+  l1.dot <- mean(l1.boot)
+  l0.se <- sqrt(sum((l0.boot - l0.dot)**2)/(B-1))
+  l1.se <- sqrt(sum((l1.boot - l1.dot)**2)/(B-1))
+  l.cov <- sum((l0.boot - l0.dot)*(l1.boot - l1.dot))/(B-1)
+  l.corr <- l.cov/(l0.se**2*l1.se**2)
+  l0.bias <- l0.dot - results[1]
+  l1.bias <- l1.dot - results[2]
+  return(data.frame(l0.se=l0.se, l1.se=l1.se, corr = l.corr, l0.bias=l0.bias, l1.bias = l1.bias))
+}
+
+stats(lambda0.boot, lambda1.boot, result)
+```
+The histogram shows the distribution of the bootstrapped values for $\hat{\lambda_0}^{*}$ and $\hat{\lambda_0}^*.$ We get the results $\hat{SD}(\hat{\lambda_0}) = 0.26, \hat{SD}(\hat{\lambda_1})=0.81, \hat{\text{bias}}_{\hat{\lambda_0}}=0.02, \hat{\text{bias}}_{\hat{\lambda_1}} = 0.03$ and $\hat{Corr}(\hat{\lambda_0},\hat{\lambda_1}) = 0.27.$ We observe that both the standard deviation and the bias are significant. However, the bias does still have a quite low value, and since the standard deviation for both $\hat{\lambda_0}$ and $\lambda_1$ are significantly higher, we will prefer the maxinmum likelihood estimator to the bias corrected estimates for $\lambda_0$ and $\lambda_1.$ This is because the variance of the bias-corrected estimate in general is higher than for the mle, and we would then trade a rather small bias reduction for a potentially larger increase in variance.  
+The pseudocode for the bootstrap method for obtaining $SD(\hat{\lambda}_0), SD(\hat{\lambda}_1)$ and $Corr[\hat{\lambda}_0,\hat{\lambda}_1]$ is shown below. 
+$$
+1. \quad \text{Generate B bootstrap samples of pairs of u and z;}
+$$
+$$
+(u,z)^{*(1)},\ldots,(u,z)^{*(B)},
+$$
+$$
+\text{by sampling from $u$ and $z$ with replacement.}
+$$
+$$
+2. \quad \text{Evaluate the corresponding parameter estimates}\\
+\text{by using the EM-function with } (u,z)^{*(b)} \text{ as input parameters:}
+$$
+$$
+\hat{\lambda_0}^{*(1)},\ldots,\hat{\lambda_0}^{*(B)},\hat{\lambda_1}^{*(1)},\ldots, \hat{\lambda_1}^{*(B)}.
+$$
+$$
+3. \quad \text{Estimate the standard deviation of }\hat{\lambda_0} \text{ and } \hat{\lambda_1} \text{ by:}
+$$
+$$
+\hat{SE}_B = \sqrt{\frac{\sum_{b=1}^B(\hat{\lambda}^{*(b)} - \hat{\lambda}^{*(\cdot)})^2}{B-1}},
+$$
+$$
+\text{where } \hat{\lambda}^{*(\cdot)} = \frac{1}{B}\sum_{b=1}^B\hat{\lambda}^{*(b)}.
+$$
+$$
+4. \quad \text{ Estimate }Corr[\hat{\lambda_0}, \hat{\lambda_1}] \text{ by }
+$$
+
+$$
+Corr[\hat{\lambda_0}, \hat{\lambda_1}] = \frac{Cov(\hat{\lambda_0}, \hat{\lambda_1})}{Var(\hat{\lambda_0})Var(\hat{\lambda_1})},\\
+\text{where}
+$$
+$$
+Cov(\hat{\lambda_0},\hat{\lambda_1}) = \frac{\sum_{b=1}^B(\hat{\lambda_0}^{*(b)} - \hat{\lambda_0}^{*(\cdot)})(\hat{\lambda_1}^{*(b)} - \hat{\lambda_1}^{*(\cdot)})}{B-1}\\
+\text{and}
+$$
+$$
+Var(\hat{\lambda_0}) = SD(\hat{\lambda_0})^2;\;Var(\hat{\lambda_1}) = SD(\hat{\lambda_1})^2.
+$$
+
+## 4.
+We will now try to estimate $\lambda_0$ and $\lambda_1$ by the maximum likelihood estimator instead. To find the likelihood of $\lambda_0$ and $\lambda_1$, and from this, their maximum likelihood estimates, we first need to find
+$$
+f_{\mathbf{U}, \mathbf{Z}}(\mathbf{u},\mathbf{z}\mid \lambda_0,\lambda_1).
+$$
+Since the pairs $(u_i,z_i)$ are i.i.d, we have that 
+$$
+f_{\mathbf{U}, \mathbf{Z}}(\mathbf{u},\mathbf{z}\mid \lambda_0,\lambda_1) = \prod_{i=1}^n f_{U_i,Z_i}(u_i,z_i \mid \lambda_0, \lambda_1),
+$$
+so we find the expression for $f_{U_i,Z_i}(u_i,z_i \mid \lambda_0, \lambda_1)$. To do this, we consider the cases where $u_i=0$ and $u_i=1$ separately, starting with $u_i=0$. We recall that for $u_1=0,$ we have that $z_i = y_i$ and $y_i \geq x_i,$ which gives us 
+$$
+F_{Z_i}(z_i,u_1=0\mid\lambda_0,\lambda_1) = \mathbb{P}(Z_i \leq z_i, U_i=0) = \mathbb{P}(Y_i\leq z_i, X_i\leq y_i) \\
+= \int_0^{z_i}\int_0^{y_i}f_{X_i,Y_i}(x_i,y_1\mid \lambda_0,\lambda_1) \text{d}x_i\text{d}y_i \\
+= \int_0^{z_i}\int_0^{y_i}f_{X_i}(x_i\mid \lambda_0,\lambda_1)f_{Y_i}(y_i\mid \lambda_0,\lambda_1) \text{d}x_i\text{d}y_i \\
+=\int_0^{z_i}\int_0^{y_i} \lambda_0e^{-\lambda_0x_i}\lambda_1e^{\lambda_1y_i} \text{d}x_i\text{d}y_i \\
+= \int_0^{z_i}\lambda_1e^{\lambda_1y_1} - \lambda_1e^{-y_i(\lambda_0 + \lambda_1)} \text{d}y_i\\
+= \frac{\lambda_1}{\lambda_0 + \lambda_1}e^{-z_i(\lambda_0 + \lambda_1)} - e^{\lambda_1z_i} + C.
+$$
+Differentiating this, we get the density 
+$$
+f_{Z_i}(z_i, u_i = 0 \mid \lambda_0, \lambda_1) = \frac{\text{d}}{\text{d}z_i}F_{Z_i}(z_i, u_i=0\mid\lambda_0,\lambda_1) \\
+= \frac{\text{d}}{\text{d}z_i} \frac{\lambda_1}{\lambda_0 + \lambda_1}e^{-z_i(\lambda_0 + \lambda_1)} - e^{\lambda_1z_i} \\ 
+= \lambda_1 e^{-\lambda_1z_i}(1 - e^{-\lambda_0z_i}).
+$$
+Similar calculations follow for $u_i = 1,$ and we get 
+$$
+f_{Z_i}(z_i, u_i=1\mid \lambda_0, \lambda_1)  = \lambda_0e^{-\lambda_0z_i}(1 - e^{-\lambda_1z_i}).
+$$
+Combining the two cases, we get
+$$
+f_{Z_i, U_i}(z_i, u_i \mid \lambda_0, \lambda_1) = \begin{cases}
+&\lambda_1e^{-\lambda_1z_i}(1 - e^{-\lambda_0z_i}),\quad \text{if }u_i=0\\
+&\lambda_0e^{-\lambda_0z_i}(1 - e^{-\lambda_1z_i}), \quad \text{if }u_i = 1
+\end{cases}.
+$$
+We then find the likelihood function of $\lambda_0,\lambda_1$ by 
+$$
+\mathcal{L}(\lambda_0,\lambda_1 \mid \mathbf{z}, \mathbf{u}) = f_{\mathbf{Z},\mathbf{U}}(\mathbf{z},\mathbf{u}\mid\lambda_0,\lambda_1) \\
+= \prod_{i=1}^nf_{Z_i, U_i}(z_i, u_i \mid \lambda_0, \lambda_1) \\
+= \prod_{i: u_i=0}\lambda_1e^{-\lambda_1z_i}(1 - e^{-\lambda_0z_i})\prod_{i:u_i=1}\lambda_0e^{-\lambda_0z_i}(1 - e^{-\lambda_1z_i}),
+$$
+with the corresponding log-likelihood function 
+$$
+\mathcal{l}(\lambda_0, \lambda_1 \mid \mathbf{z}, \mathbf{u}) = \sum_{i:u_i=0}\log(\lambda_1e^{-\lambda_1z_i}(1 - e^{-\lambda_0z_i})) + \sum_{i:u_i=1}\log(\lambda_0e^{-\lambda_0z_i}(1 - e^{-\lambda_1z_i})).
+$$
+To find the mle of $\lambda_0, \lambda_1$, we maximize $\mathcal{l}$ using the built-in optimizer in $\texttt{R}, \texttt{optim()}.$ Note that the $\texttt{optim}-$function finds the parameters that minimize the input function, so we use it to minimize $-\mathcal{l},$ which will give us the mle. 
+```{r}
+log.lik <- function(par, u, z){
+  # par = c(lambda_0, lambda_1)
+  u.0.idx <- which(u==0)
+  u.1.idx <- which(u==1)
+  result <- sum(log(par[2]*exp(-par[2]*z[u.0.idx])*(1 - exp(-par[1]*z[u.0.idx]))))
+  result <- result + sum(log(par[1]*exp(-par[1]*z[u.1.idx])*(1 - exp(-par[2]*z[u.1.idx]))))
+  return(-result)
+}
+
+mle <- optim(par=c(2,2), fn=log.lik, u=u, z=z)
+mle
+```
+We get maximum likelihood estimators of $\hat{\lambda_0} = 3.46$ and $\hat{\lambda_1} = 9.33$, which are very close to the values we got for the estimators of $\lambda_0$ and $\lambda_1$ using the EM-method. An advantage of finding the mle optimizing the likelihood directly, if one can find an expression for the likelihood, is that the EM-algorithm might be very slow in convergence, and the performance might depend on the choice of initial values.
