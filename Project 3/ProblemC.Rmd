@@ -323,4 +323,4 @@ log.lik <- function(par, u, z){
 mle <- optim(par=c(2,2), fn=log.lik, u=u, z=z)
 mle
 ```
-We get maximum likelihood estimators of $\hat{\lambda_0} = 3.46$ and $\hat{\lambda_1} = 9.33$, which are very close to the values we got for the estimators of $\lambda_0$ and $\lambda_1$ using the EM-method. 
+We get maximum likelihood estimators of $\hat{\lambda_0} = 3.46$ and $\hat{\lambda_1} = 9.33$, which are very close to the values we got for the estimators of $\lambda_0$ and $\lambda_1$ using the EM-method. An advantage of finding the mle optimizing the likelihood directly, if one can find an expression for the likelihood, is that the EM-algorithm might be very slow in convergence, and the performance might depend on the choice of initial values.
