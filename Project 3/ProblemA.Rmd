@@ -1,8 +1,10 @@
 ---
 title: "Oblig3 - TMA4300"
-author: "Martine Middelthon"
+author: "Martine Middelthon and Helene Behrens"
 date: "30 3 2020"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -82,14 +84,18 @@ bootstrap.betas = function(x, betas, B=1500) {
 
 betas.boot = bootstrap.betas(x, betas, 1500)  # Bootstrapped LS and LA coefficients
 
-betaLS.var = c(var(betas.boot[1,]), var(betas.boot[2,]))    # ( var(beta_{LS,1}), var(beta_{LS,2}) )
-betaLA.var = c(var(betas.boot[3,]), var(betas.boot[4,]))    # ( var(beta_{LA,1}), var(beta_{LA,2}) )
+# ( var(beta_{LS,1}), var(beta_{LS,2}) )
+betaLS.var = c(var(betas.boot[1,]), var(betas.boot[2,]))
+# ( var(beta_{LA,1}), var(beta_{LA,2}) )
+betaLA.var = c(var(betas.boot[3,]), var(betas.boot[4,]))    
 
 cat("Variance of LS estimator:", betaLS.var)
 cat("\nVariance of LA estimator:", betaLA.var)
 
-betaLS.mean = c(mean(betas.boot[1,]), mean(betas.boot[2,]))   # ( mean(beta_{LS,1}), mean(beta_{LS,2}) )
-betaLA.mean = c(mean(betas.boot[3,]), mean(betas.boot[4,]))   # ( mean(beta_{LA,1}), mean(beta_{LA,2}) )
+# ( mean(beta_{LS,1}), mean(beta_{LS,2}) )
+betaLS.mean = c(mean(betas.boot[1,]), mean(betas.boot[2,]))
+# ( mean(beta_{LA,1}), mean(beta_{LA,2}) )
+betaLA.mean = c(mean(betas.boot[3,]), mean(betas.boot[4,]))   
 
 betaLS.bias = betaLS.mean - betas[[1]]    # ( bias(beta_{LS,1}), bias(beta_{LS,2}) )
 betaLA.bias = betaLA.mean - betas[[2]]    # ( bias(beta_{LA,1}), bias(beta_{LA,2}) )
@@ -126,8 +132,10 @@ predictionInterval = function(x, betas, B=1500) {
     resample.residLS = sample(resids.est.LS, size = T, replace = TRUE)
     resample.residLA = sample(resids.est.LA, size = T, replace = TRUE)
     # Calculate new sequence of data
-    x.bootstrap.LS = ARp.filter(x0, betaLS, resample.residLS)[3:(T+2)]    # Exclude initial sequence x0
-    x.bootstrap.LA = ARp.filter(x0, betaLA, resample.residLA)[3:(T+2)]    # Exclude initial sequence x0
+    #   Exclude initial sequence x0:
+    x.bootstrap.LS = ARp.filter(x0, betaLS, resample.residLS)[3:(T+2)]
+    #   Exclude initial sequence x0:
+    x.bootstrap.LA = ARp.filter(x0, betaLA, resample.residLA)[3:(T+2)]    
     # Estimate coefficients based on the sequence
     betasLS = ARp.beta.est(x.bootstrap.LS, 2)[[1]]
     betasLA = ARp.beta.est(x.bootstrap.LA, 2)[[2]]
