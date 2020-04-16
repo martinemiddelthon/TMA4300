@@ -214,12 +214,32 @@ for(b in 1:B){
   lambda1.boot[b] <- lambs[2]
 }
 
+# histograms of bootstrap samples of estimators
+hist(lambda0.boot)
+hist(lambda1.boot)
+
 # estimate sd and corr:
 lambda0.sd <- sd(lambda0.boot); lambda0.sd
 lambda1.sd <- sd(lambda1.boot); lambda1.sd
 lambda.corr <- cor(lambda0.boot, lambda1.boot); lambda.corr
 cat(c(lambda0.sd, lambda1.sd, lambda.corr))
+
+stats <- function(l0.boot, l1.boot, results){
+  B <- length(l0.boot)
+  l0.dot <- mean(l0.boot)
+  l1.dot <- mean(l1.boot)
+  l0.se <- sqrt(sum((l0.boot - l0.dot)**2)/(B-1))
+  l1.se <- sqrt(sum((l1.boot - l1.dot)**2)/(B-1))
+  l.cov <- sum((l0.boot - l0.dot)*(l1.boot - l1.dot))/(B-1)
+  l.corr <- l.cov/(l0.se**2*l1.se**2)
+  l0.bias <- l0.dot - results[1]
+  l1.bias <- l1.dot - results[2]
+  return(data.frame(l0.se=l0.se, l1.se=l1.se, corr = l.corr, l0.bias=l0.bias, l1.bias = l1.bias))
+}
+
+stats(lambda0.boot, lambda1.boot, result)
 ```
+We get $\hat{SD}(\hat{\lambda_0}) = 0.26, \hat{SD}(\hat{\lambda_1})=0.81, \hat{\text{bias}}_{\hat{\lambda_0}}=0.02, \hat{\text{bias}}_{\hat{\lambda_1}} = 0.03$ and $\hat{Corr}(\hat{\lambda_0},\hat{\lambda_1}) = 0.27.$ We observe that both the standard deviation and the bias are significant. However, the bias does still have a quite low value, and since the standard deviation for both $\hat{\lambda_0}$ and $\lambda_1$ are significantly higher, we will prefer the maxinmum likelihood estimator to the bias corrected estimates for $\lambda_0$ and $\lambda_1.$ This is because the variance of the bias-corrected estimate in general is higher than for the mle, and we would then trade a rather small bias reduction for a potentially larger increase in variance.  
 The pseudocode for the bootstrap method for obtaining $SD(\hat{\lambda}_0), SD(\hat{\lambda}_1)$ and $Corr[\hat{\lambda}_0,\hat{\lambda}_1]$ is shown below. 
 $$
 1. \quad \text{Generate B bootstrap samples of pairs of u and z;}
@@ -255,7 +275,7 @@ Corr[\hat{\lambda_0}, \hat{\lambda_1}] = \frac{Cov(\hat{\lambda_0}, \hat{\lambda
 \text{where}
 $$
 $$
-Cov(\hat{\lambda_0},\hat{\lambda_1}) = \frac{\sum_{b=1}^B(\hat{\lambda_0}^{*(b)} - \hat{\lambda_0}^{*(\cdot)})(\hat{\lambda_1}^{*(b)} - \hat{\lambda_1}^{*(\cdot)})}{N-1}\\
+Cov(\hat{\lambda_0},\hat{\lambda_1}) = \frac{\sum_{b=1}^B(\hat{\lambda_0}^{*(b)} - \hat{\lambda_0}^{*(\cdot)})(\hat{\lambda_1}^{*(b)} - \hat{\lambda_1}^{*(\cdot)})}{B-1}\\
 \text{and}
 $$
 $$
