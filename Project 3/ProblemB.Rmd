@@ -30,11 +30,13 @@ reg <- lm(log(meas)~pers, data=bilirubin)
 summary.lm <- summary(reg); summary.lm
 Fval <- summary.lm$fstatistic; Fval
 ```
-We want test the hypothesis that $\beta_1=\beta_2=\beta_3,$ i.e. that the expected bilirubin levels are actually the same for all individuals. To check this, we use the F-test with the reported F statistic from the $\texttt{summary}$, `{r}Fval`. The reported p-value of this F-statistic is 0.039, and thus we can reject the hypothesis that $\beta_1=\beta_2=\beta_3$ at significance level 5$\%$. Alternatively, we can argue that the 95$\%$ quantile of the F-distribution with 2 and 26 degrees of freedom is `qf(.95, df1=2, df2=26)`, which is less than $\texttt{Fval}$, which gives the same conclusion. 
+We want test the hypothesis that $\beta_1=\beta_2=\beta_3,$ i.e. that the expected bilirubin levels are actually the same for all individuals. To check this, we use the F-test with the reported F statistic from the $\texttt{summary}$, `r Fval`. The reported p-value of this F-statistic is 0.039, and thus we can reject the hypothesis that $\beta_1=\beta_2=\beta_3$ at significance level 5$\%$. Alternatively, we can argue that the 95$\%$ quantile of the F-distribution with 2 and 26 degrees of freedom is `r qf(.95, df1=2, df2=26)`, which is less than $\texttt{Fval}$, which gives the same conclusion. 
 ```{r}
 #  defining function PermTest():
 PermTest <- function(bilirubin){
+  # create permutation
   perm.df <- data.frame(meas=sample(bilirubin$meas), pers = bilirubin$pers)
+  # perform regresiion on permutation
   reg <- lm(log(meas)~pers, data=perm.df)
   Fval <- summary(reg)$fstatistic["value"]
   return(Fval)
@@ -42,8 +44,11 @@ PermTest <- function(bilirubin){
 ```
 We perform a perturbation test between the three individuals to check whether the value of the F-statistic is due to an actual difference in the bilirubin level in the individuals, or by chance in the distribution of the measurements between the individuals. Using the $\texttt{PermTest}$-function defined above, we generate 999 samples of the F-statistic:
 ```{r}
+set.seed(1)
+
 F.samp <- rep(0,999)
 for(i in 1:999){
+  # samples of F-statistic
   F.samp[i] <- PermTest(bilirubin)
 }
 ```
@@ -52,4 +57,4 @@ From these, we compute the p-value as the probability to observe an F-statistic 
 #  compute p-value for Fval using F.samp:
 p.val <- length(F.samp[F.samp>=Fval["value"]])/999; p.val
 ```
-The p-value is 0.044, so at a significance level 5$\%$ we reject the hypothesis that the bilirubin levels are the same for all individuals. 
+The p-value is 0.042, so at a significance level 5$\%$ we reject the hypothesis that the bilirubin levels are the same for all individuals. 
